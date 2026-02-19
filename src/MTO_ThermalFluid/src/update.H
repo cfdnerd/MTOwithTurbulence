@@ -32,6 +32,15 @@ if(opt>100)
   alphaMax=alphaMax*1.02;
 }
 alphaMax.value()=Foam::min(alphaMax.value(),alphaMAX.value());
+// Mesh-scaled cap: alpha ∝ nu/h^2 keeps pressure matrix condition number bounded (Brinkman lit.)
+scalar alphaMaxMesh = 1e30;
+{
+  scalar nCell = returnReduce(mesh.nCells(), sumOp<label>());
+  scalar volTot = gSum(mesh.V()).value();
+  scalar hChar = Foam::pow(max(volTot/nCell, 1e-30), 1.0/3.0);
+  alphaMaxMesh = alphaMaxMeshFactor*nu.value()/max(hChar*hChar, 1e-30);
+  alphaMax.value() = Foam::min(alphaMax.value(), alphaMaxMesh);
+}
 if(opt>=80)
 {
   qu=0.005+(opt-80)*1e-4;
@@ -39,5 +48,6 @@ if(opt>=80)
 qu=Foam::min(qu,0.01);
 const volScalarField xhSafe(Foam::max(xh, scalar(1e-3)));
 volScalarField alphaRaw(alphaMax*qu*(1-xhSafe)/(qu+xhSafe));
-alpha=Foam::min(alphaRaw, dimensionedScalar("alphaCap", alphaRaw.dimensions(), 1e4));
+scalar alphaCapVal = Foam::min(scalar(1e4), alphaMaxMesh);
+alpha=Foam::min(alphaRaw, dimensionedScalar("alphaCap", alphaRaw.dimensions(), alphaCapVal));
 DT=(ks+(kf-ks)*xh*(1+qu)/(qu+xh))/rhoc;
