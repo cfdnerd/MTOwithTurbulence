@@ -19,8 +19,8 @@ solvers
 {
     "(p|pa|pb|pc)"
     {
-        solver          PCG;
-        preconditioner  DIC;
+        solver          PBiCGStab;
+        preconditioner  DILU;
         tolerance       1e-8;
         relTol          0.01;
     }
