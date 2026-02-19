@@ -37,10 +37,18 @@
            *(-dNutdOmega*(dev2(twoSymm(fvc::grad(U))) && fvc::grad(Ua)))
         );
 
-        // RHS: thermal source (objFunction 1) deferred - grad(T)&grad(Tb) has wrong dimensions
-        // for ka/omegaa eqns; needs proper non-dimensionalization (Tb scale, rhoc, etc.)
+        // RHS: thermal source (objFunction 1) - alphat = nut/Prt affects T via diffusion
+        // Scale by k²/Tref² for ka ([0 2 -3]) and omega²/Tref² for omegaa ([0 0 -2])
         volScalarField kaRhsThermal(kaRhsMomentum * 0.0);
         volScalarField omegaaRhsThermal(omegaaRhsMomentum * 0.0);
+        if (objFunction == 1)
+        {
+            const dimensionedScalar Tref2("Tref2", dimTemperature*dimTemperature, max(1.0, gMax(T)*gMax(T)));
+            const volScalarField gradTgradTb((fvc::grad(T) & fvc::grad(Tb)));
+            kaRhsThermal = (k + kSmall)*(k + kSmall)/Tref2 * (dNutdk/Prt) * gradTgradTb;
+            omegaaRhsThermal = (omega + omegaSmall)*(omega + omegaSmall)/Tref2
+                             * (dNutdOmega/Prt) * gradTgradTb;
+        }
 
         // Adjoint k equation: -div(phi,ka) - div(DkEff*grad(ka)) + beta*omega*ka = RHS
         fvScalarMatrix kaEqn

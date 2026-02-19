@@ -29,6 +29,8 @@ Switch fluid_area(optProperties.lookup("fluid_area"));
 Switch test_area(optProperties.lookup("test_area"));
 scalar Pnorm(readScalar(optProperties.lookup("Pnorm")));
 scalar objFunction(readScalar(optProperties.lookup("objFunction")));
+scalar nAdjTurbPasses(optProperties.lookupOrDefault<scalar>("nAdjTurbPasses", 1));
+scalar turbSensDamp(optProperties.lookupOrDefault<scalar>("turbSensDamp", 0));
 Info<< "Reading pseudo-density field\n" << endl;
 volScalarField xp
 (

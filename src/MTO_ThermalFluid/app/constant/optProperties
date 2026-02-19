@@ -31,5 +31,9 @@ solid_area          no;
 test_area           yes;
 Pnorm               300;
 objFunction         1;
+// Adjoint turbulence coupling: 2 = two passes of ka,omegaa,Ua (iterative); 1 = single pass
+nAdjTurbPasses      2;
+// Turbulence sensitivity damping coeff (0=off; use if Rk/Romega have -c*alpha*k/omega in solid)
+turbSensDamp        0;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //  

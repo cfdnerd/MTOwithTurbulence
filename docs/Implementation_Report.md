@@ -52,15 +52,13 @@
 - Inserted `#include "Adjoint_kOmegaSST.H"` in main loop (before AdjointHeat_Ub, AdjointFlow_Ua)
 - Added ka, omegaa to fvSolution
 - **Adjoint momentum–turbulence coupling (S_ka, S_ωa):** Ua receives source terms from production Pk and P_omega (Kavvadias formulation)
-- **Adjoint ka, ωa RHS:** Momentum source `-dNutdk*(dev2(twoSymm(grad(U))) : grad(Ua))`; thermal source `(dNutdk/Prt)*(grad(T)&grad(Tb))` when objFunction=1
-- **clipTurbulence:** Removed — direct modification of k,ω via const_cast conflicted with kOmegaSST internal state (G lookup)
-- **fvSchemes:** `div(phi,ka)` and `div(phi,omegaa)` with bounded Gauss upwind
-- **sensitivity.H:** Placeholder for turbulence–xh coupling (zero when Rk,Rω have no direct xh dependence)
-- **costfunction.H:** 2D PowerDiss scaling removed (not physically justified)
-
-**Remaining:**
-- Adjoint wall BCs for ka, ωa: zeroGradient (adjoint wall functions deferred)
-- Solve order: lagged coupling (ka, ωa use previous Ua); iterative coupling possible for stiff cases
+- **Adjoint ka, ωa RHS:** Momentum source (scaled by k, ω²/k for dims); thermal source `k²/Tref²*(dNutdk/Prt)*(grad(T)&grad(Tb))` when objFunction=1
+- **Adjoint wall BCs:** fixedValue 0 at walls for ka, ωa (adjoint wall functions deferred)
+- **Sensitivity turbulence:** `turbSensDamp*ka*dAlphaDxh` when turbSensDamp>0 (for Rk~-c*alpha*k in solid)
+- **Iterative coupling:** `nAdjTurbPasses` (default 2) — multiple passes of ka,ωa,Ua for stronger coupling
+- **clipTurbulence:** Removed — conflicted with kOmegaSST internals
+- **fvSchemes:** `div(phi,ka)`, `div(phi,omegaa)` bounded Gauss upwind
+- **costfunction.H:** 2D PowerDiss scaling removed
 
 ---
 
@@ -94,8 +92,8 @@
 | **Adjoint ka, ωa RHS** | High | ✅ Implemented (momentum + alphat) |
 | **Brinkman k/ω bounds** | Medium | Removed — conflicts with turbulence model internals |
 | **Curvature correction missing** | Medium | Deferred — requires kOmegaSSTCC library |
-| **Adjoint wall BCs** | Medium | zeroGradient; adjoint wall functions deferred |
-| **Sensitivity turbulence terms** | Low | Placeholder; zero when no direct xh dependence |
+| **Adjoint wall BCs** | Medium | ✅ fixedValue 0 at walls (Kavvadias-style deferred) |
+| **Sensitivity turbulence terms** | Low | ✅ Implemented (turbSensDamp in optProperties) |
 | **fvSchemes ka, ωa** | Low | ✅ bounded Gauss upwind |
 | **2D PowerDiss scaling** | — | ✅ Removed |
 
