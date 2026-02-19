@@ -7,12 +7,15 @@ for(i=0;i<40;i++)
   {
       const volScalarField& ka = mesh.thisDb().lookupObject<volScalarField>("ka");
       const volScalarField& omegaa = mesh.thisDb().lookupObject<volScalarField>("omegaa");
+      const volScalarField& k = mesh.thisDb().lookupObject<volScalarField>("k");
+      const volScalarField& omega = mesh.thisDb().lookupObject<volScalarField>("omega");
       const volScalarField& nut = turbulence->nut();
-      const dimensionedScalar gamma1("gamma1", dimless, 5.0/9.0);  // SST gamma in inner region
-      // Adjoint momentum source from turbulence: from production Pk = nut*2|S|^2 and P_omega = gamma/nut*Pk
-      // Kavvadias: S_ka = -div(ka * dPk/d(grad U)), dPk/dS = 4*nut*S
-      turbSourceUa = -fvc::div(ka*2*nut*twoSymm(fvc::grad(U)))
-                     -fvc::div(omegaa*2*gamma1*twoSymm(fvc::grad(U)));
+      const dimensionedScalar gamma1("gamma1", dimless, 5.0/9.0);
+      const dimensionedScalar kSmall("kSmall", dimArea/dimTime/dimTime, 1e-10);
+      const dimensionedScalar omegaSmall("omegaSmall", dimless/dimTime, 1e-10);
+      // Adjoint momentum source: raw terms have [0 3 -4] and [0 1 -3]; scale by 1/k and 1/omega to get [0 1 -2]
+      turbSourceUa = -fvc::div(ka*2*nut*twoSymm(fvc::grad(U)))/(k + kSmall)
+                     -fvc::div(omegaa*2*gamma1*twoSymm(fvc::grad(U)))/(omega + omegaSmall);
   }
 
   tmp<fvVectorMatrix> tUaEqn
