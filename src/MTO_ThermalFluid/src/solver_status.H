@@ -75,7 +75,7 @@ inline void logSolverStats
     const word key(eqnName);
     const scalar initRes = mag(sp.initialResidual());
     const scalar finRes = mag(sp.finalResidual());
-    const label nIter = sp.nIterations();
+    const label nIter = cmptMax(sp.nIterations());
 
     using namespace MTOsolverStatus;
     if (!maxInitRes.found(key))
