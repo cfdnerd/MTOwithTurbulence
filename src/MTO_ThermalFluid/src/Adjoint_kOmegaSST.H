@@ -4,10 +4,8 @@
 {
     if (mesh.thisDb().foundObject<volScalarField>("k") && mesh.thisDb().foundObject<volScalarField>("omega"))
     {
-        const volScalarField& k = mesh.thisDb().lookupObject<volScalarField>("k");
         const volScalarField& omega = mesh.thisDb().lookupObject<volScalarField>("omega");
         const volScalarField& nut = turbulence->nut();
-        const volScalarField& nuEff = turbulence->nuEff();
 
         // SST constants (must match primal kOmegaSST)
         const dimensionedScalar alphaK1("alphaK1", dimless, 0.85);

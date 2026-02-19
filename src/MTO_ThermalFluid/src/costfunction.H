@@ -1,4 +1,3 @@
-#include <iomanip>
 Info<<"cost function"<<endl;
 MeanT=fvc::domainIntegrate(T).value()/area;
 V=fvc::domainIntegrate(xh).value()/area-(voluse+0*Foam::max(0,0.5-opt*0.015));
@@ -34,13 +33,13 @@ if (Pstream::master())
         optLog << "#  optIter  | PowerDissActual [W] | PowerDiss [-] |  MeanT [K]  |  maxT [K]  |     V [-]     | elapsedTime [s]\n";
         optLog << "# ---------+---------------------+---------------+-------------+------------+---------------+------------------\n";
     }
-    optLog << std::setw(9) << opt << " | "
-           << std::setw(19) << PowerDissActual << " | "
-           << std::setw(13) << PowerDiss << " | "
-           << std::setw(11) << MeanT << " | "
-           << std::setw(10) << maxT << " | "
-           << std::setw(15) << V << " | "
-           << std::setw(16) << elapsedTime << "\n";
+    optLog.width(9);  optLog << opt << " | ";
+    optLog.width(19); optLog << PowerDissActual << " | ";
+    optLog.width(13); optLog << PowerDiss << " | ";
+    optLog.width(11); optLog << MeanT << " | ";
+    optLog.width(10); optLog << maxT << " | ";
+    optLog.width(15); optLog << V << " | ";
+    optLog.width(16); optLog << elapsedTime << "\n";
     optLog.close();
 }
 if(runTime.writeTime())
