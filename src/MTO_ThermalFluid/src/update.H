@@ -36,7 +36,7 @@ alphaMax.value()=Foam::min(alphaMax.value(),alphaMAX.value());
 scalar alphaMaxMesh = 1e30;
 {
   scalar nCell = returnReduce(mesh.nCells(), sumOp<label>());
-  scalar volTot = gSum(mesh.V()).value();
+  scalar volTot = gSum(mesh.V());
   scalar hChar = Foam::pow(max(volTot/nCell, 1e-30), 1.0/3.0);
   alphaMaxMesh = alphaMaxMeshFactor*nu.value()/max(hChar*hChar, 1e-30);
   alphaMax.value() = Foam::min(alphaMax.value(), alphaMaxMesh);
