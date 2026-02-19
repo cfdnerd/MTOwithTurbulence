@@ -1,4 +1,4 @@
-for(i=0;i<40;i++)
+for(i=0;i<50;i++)
 { 
   volVectorField adjointTransposeConvectiona((fvc::grad(U) & Ua));
 

@@ -1,4 +1,4 @@
-for(i=0;i<60;i++)
+for(i=0;i<80;i++)
 {
 MRF.correctBoundaryVelocity(U);
 tmp<fvVectorMatrix> tUEqn
