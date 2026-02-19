@@ -1,6 +1,7 @@
 #ifndef MMA_H
 #define MMA_H
 
+#define MPI_NO_CPPBIND 1
 #include "mpi.h"
 #include <vector>
 #include <cmath>
