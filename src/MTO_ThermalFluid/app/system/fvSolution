@@ -37,17 +37,19 @@ solvers
     }
     T
     {
-        solver          PBiCGStab;
-        preconditioner  DILU;
+        solver          GAMG;
+        smoother        DICGaussSeidel;
         tolerance       1e-6;
         relTol          0.01;
+        nCellsInCoarsestLevel 10;
     }
     "(Ta|Tb)"
     {
-        solver          PBiCGStab;
-        preconditioner  DILU;
+        solver          GAMG;
+        smoother        DICGaussSeidel;
         tolerance       1e-7;
         relTol          0.001;
+        nCellsInCoarsestLevel 10;
     }
      "(xp|fsensMeanT|gsensVol|gsensPowerDiss)"
     {
