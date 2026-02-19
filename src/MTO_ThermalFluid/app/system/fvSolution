@@ -17,14 +17,6 @@ FoamFile
 
 solvers
 {
-    "(D|Da)"
-    {
-        solver          GAMG;
-        tolerance       1e-6;
-        relTol          0.9;
-        smoother        GaussSeidel;
-        nCellsInCoarsestLevel 20;
-    }
     "(p|pa|pb|pc)"
     {
         solver          PCG;
@@ -43,9 +35,8 @@ solvers
     }
      "(T)"
     {
-        solver          GAMG;
+        solver          PCG;
         preconditioner  DILU;
-        smoother        GaussSeidel;
         tolerance       1e-6;
         relTol          0;
     }  

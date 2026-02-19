@@ -27,9 +27,7 @@ ddtSchemes
 gradSchemes
 {
     default         Gauss linear;
-    grad(D)         leastSquares;
     grad(T)         leastSquares;
-    grad(Da)        leastSquares;
     grad(Ta)        leastSquares;
     grad(Tb)        leastSquares;
 }
@@ -70,8 +68,6 @@ fluxRequired
     p;
     pa;
     pb;
-    D;
-    Da;
 }
 wallDist
 {
