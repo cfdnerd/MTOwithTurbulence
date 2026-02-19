@@ -1,4 +1,3 @@
-#include "solver_status.H"
 // Adjoint k-omega SST turbulence equations (sensitivity-consistent)
 // Solves adjoint ka, omegaa when RAS turbulence is active
 // See Kavvadias et al. (2014) for full derivation

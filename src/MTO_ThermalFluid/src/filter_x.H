@@ -1,4 +1,3 @@
-#include "solver_status.H"
 //***********************************//PDE filter
 {
     fvScalarMatrix xpEqn(fvm::laplacian(xp)-fvm::Sp(b,xp)+x*b);

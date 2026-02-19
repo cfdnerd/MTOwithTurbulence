@@ -1,4 +1,3 @@
-#include "solver_status.H"
 T=T2;
 // Turbulent thermal diffusivity: alphat = nut/Prt (IncompressibleTurbulenceModel has no alphat())
 const dimensionedScalar Prt("Prt", dimless, 0.85);

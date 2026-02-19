@@ -1,4 +1,3 @@
-#include "solver_status.H"
 for(i=0;i<40;i++)
 {    
 volVectorField adjointTransposeConvectionb((fvc::grad(U) & Ub));

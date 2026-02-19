@@ -19,7 +19,6 @@ if(opt>1)
   gsenshPowerDiss=gsenshPowerDiss*drho;
   gsenshVol=gsenshVol*drho;
 }
-#include "solver_status.H"
 //***********************************//PDE filter
 {
     fvScalarMatrix fsensEqn(fvm::laplacian(fsensMeanT)-fvm::Sp(b,fsensMeanT)+fsenshMeanT*b);

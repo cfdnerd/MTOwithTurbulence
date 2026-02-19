@@ -1,4 +1,3 @@
-#include "solver_status.H"
 //Tb=T2;
 sumT=0;
 maxT=gMax(T);
