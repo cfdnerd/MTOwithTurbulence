@@ -24,6 +24,8 @@ logSolverStats(runTime, "AdjointHeat_Ub", i, "Ub", spUb, opt, runTime.timeName()
 fvOptions.correct(Ub);
 //****************************************
 volScalarField rAUb(1.0/UbEqn.A());
+const scalar rAUbFloor = 1e-6 * gAverage(rAUb);
+rAUb = max(rAUb, dimensionedScalar("rAUbFloor", rAUb.dimensions(), max(rAUbFloor, 1e-12)));
 volVectorField HbyAb("HbyAb", Ub);
 HbyAb = rAUb*UbEqn.H();
 surfaceScalarField phiHbyAb("phiHbyAb", fvc::flux(HbyAb));
@@ -34,6 +36,7 @@ tmp<volScalarField> rAtUb(rAUb);
  if (simple.consistent())
 {
     rAtUb = 1.0/(1.0/rAUb - UbEqn.H1());
+    rAtUb.ref() = max(rAtUb(), dimensionedScalar("rAtUbFloor", rAtUb().dimensions(), max(rAUbFloor, 1e-12)));
     phiHbyAb +=
         fvc::interpolate(rAtUb() - rAUb)*fvc::snGrad(pb)*mesh.magSf();
     HbyAb -= (rAUb - rAtUb())*fvc::grad(pb);
