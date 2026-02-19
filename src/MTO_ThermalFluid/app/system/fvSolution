@@ -19,13 +19,10 @@ solvers
 {
     "(p|pa|pb|pc)"
     {
-        solver          GAMG;
-        smoother        GaussSeidel;
-        cacheAgglomeration true;
-        nCellsInCoarsestLevel 10;
-        mergeLevels     1;
-        tolerance       1e-7;
-        relTol          0.1;
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-8;
+        relTol          0.01;
     }
 
     "(U|Ua|Ub|Uc|k|omega|ka|omegaa|epsilon)"
@@ -38,21 +35,16 @@ solvers
     }
     T
     {
-        solver          GAMG;
+        solver          smoothSolver;
         smoother        GaussSeidel;
-        cacheAgglomeration true;
-        nCellsInCoarsestLevel 10;
-        mergeLevels     1;
+        nSweeps         4;
         tolerance       1e-6;
-        relTol          0.01;
+        relTol          0.05;
     }
     "(Ta|Tb)"
     {
-        solver          GAMG;
-        smoother        GaussSeidel;
-        cacheAgglomeration true;
-        nCellsInCoarsestLevel 10;
-        mergeLevels     1;
+        solver          PBiCGStab;
+        preconditioner  DILU;
         tolerance       1e-7;
         relTol          0.01;
     }
