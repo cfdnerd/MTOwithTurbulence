@@ -59,7 +59,7 @@ vertices
 blocks
 (
     hex (0 7 6 3 10 17 16 13)
-	solid_area
+    test_area
     ($Nx $Ny 1)
     simpleGrading (1 1 1)
 
