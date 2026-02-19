@@ -1,3 +1,4 @@
+#include <iomanip>
 Info<<"cost function"<<endl;
 MeanT=fvc::domainIntegrate(T).value()/area;
 V=fvc::domainIntegrate(xh).value()/area-(voluse+0*Foam::max(0,0.5-opt*0.015));
@@ -23,12 +24,23 @@ if (Pstream::master())
 {
     const scalar elapsedTime = runTime.elapsedClockTime();
     ofstream optLog("optimization.hst", std::ios::app);
+    optLog.setf(std::ios::scientific);
+    optLog.precision(6);
     if (opt == 1)
     {
-        optLog << "# optIter PowerDissActual PowerDiss MeanT maxT V elapsedTime[s]\n";
+        optLog << "# ================================================================================\n";
+        optLog << "# MTO_ThermalFluid Optimization History\n";
+        optLog << "# ================================================================================\n";
+        optLog << "#  optIter  | PowerDissActual [W] | PowerDiss [-] |  MeanT [K]  |  maxT [K]  |     V [-]     | elapsedTime [s]\n";
+        optLog << "# ---------+---------------------+---------------+-------------+------------+---------------+------------------\n";
     }
-    optLog << opt << " " << PowerDissActual << " " << PowerDiss << " " << MeanT
-           << " " << maxT << " " << V << " " << elapsedTime << "\n";
+    optLog << std::setw(9) << opt << " | "
+           << std::setw(19) << PowerDissActual << " | "
+           << std::setw(13) << PowerDiss << " | "
+           << std::setw(11) << MeanT << " | "
+           << std::setw(10) << maxT << " | "
+           << std::setw(15) << V << " | "
+           << std::setw(16) << elapsedTime << "\n";
     optLog.close();
 }
 if(runTime.writeTime())
