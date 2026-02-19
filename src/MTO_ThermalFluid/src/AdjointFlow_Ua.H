@@ -1,3 +1,4 @@
+#include "solver_status.H"
 for(i=0;i<40;i++)
 { 
   volVectorField adjointTransposeConvectiona((fvc::grad(U) & Ua));
@@ -17,7 +18,8 @@ for(i=0;i<40;i++)
 
   fvOptions.constrain(UaEqn);
 
-  solve(UaEqn == -fvc::grad(pa));
+  SolverPerformance<vector> spUa = solve(UaEqn == -fvc::grad(pa));
+  logSolverStats("AdjointFlow_Ua", i, "Ua", spUa, opt, runTime.timeName());
 
   fvOptions.correct(Ua);
 //****************************************
@@ -51,7 +53,8 @@ for(i=0;i<40;i++)
       );
 
       paEqn.setReference(paRefCell, paRefValue);
-      paEqn.solve();
+      SolverPerformance<scalar> sppa = paEqn.solve();
+      logSolverStats("AdjointFlow_Ua", i, "pa", sppa, opt, runTime.timeName());
 
       if (simple.finalNonOrthogonalIter())
       {

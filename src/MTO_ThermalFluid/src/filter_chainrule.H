@@ -19,12 +19,23 @@ if(opt>1)
   gsenshPowerDiss=gsenshPowerDiss*drho;
   gsenshVol=gsenshVol*drho;
 }
+#include "solver_status.H"
 //***********************************//PDE filter
-solve(fvm::laplacian(fsensMeanT)-fvm::Sp(b,fsensMeanT)+fsenshMeanT*b);
-
-solve(fvm::laplacian(gsensPowerDiss)-fvm::Sp(b,gsensPowerDiss)+gsenshPowerDiss*b);
-
-solve(fvm::laplacian(gsensVol)-fvm::Sp(b,gsensVol)+gsenshVol*b);
+{
+    fvScalarMatrix fsensEqn(fvm::laplacian(fsensMeanT)-fvm::Sp(b,fsensMeanT)+fsenshMeanT*b);
+    SolverPerformance<scalar> spFsens = fsensEqn.solve();
+    logSolverStats("filter_chainrule", 0, "fsensMeanT", spFsens, opt, runTime.timeName());
+}
+{
+    fvScalarMatrix gsensEqn(fvm::laplacian(gsensPowerDiss)-fvm::Sp(b,gsensPowerDiss)+gsenshPowerDiss*b);
+    SolverPerformance<scalar> spGsensP = gsensEqn.solve();
+    logSolverStats("filter_chainrule", 0, "gsensPowerDiss", spGsensP, opt, runTime.timeName());
+}
+{
+    fvScalarMatrix gvolEqn(fvm::laplacian(gsensVol)-fvm::Sp(b,gsensVol)+gsenshVol*b);
+    SolverPerformance<scalar> spGsensV = gvolEqn.solve();
+    logSolverStats("filter_chainrule", 0, "gsensVol", spGsensV, opt, runTime.timeName());
+}
 
 fsensMeanT.primitiveFieldRef()=fsensMeanT.primitiveFieldRef()*mesh.V()/gMax(mesh.V());
 gsensPowerDiss.primitiveFieldRef()=gsensPowerDiss.primitiveFieldRef()*mesh.V()/gMax(mesh.V());

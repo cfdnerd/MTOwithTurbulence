@@ -1,3 +1,4 @@
+#include "solver_status.H"
 for(i=0;i<40;i++)
 {    
 volVectorField adjointTransposeConvectionb((fvc::grad(U) & Ub));
@@ -18,7 +19,8 @@ UbEqn.relax();
 
 fvOptions.constrain(UbEqn);
 
-solve(UbEqn == -fvc::grad(pb));
+SolverPerformance<vector> spUb = solve(UbEqn == -fvc::grad(pb));
+logSolverStats("AdjointHeat_Ub", i, "Ub", spUb, opt, runTime.timeName());
 
 fvOptions.correct(Ub);
 //****************************************
@@ -50,7 +52,8 @@ while (simple.correctNonOrthogonal())
     );
 
     pbEqn.setReference(pbRefCell, pbRefValue);
-    pbEqn.solve();
+    SolverPerformance<scalar> sppb = pbEqn.solve();
+    logSolverStats("AdjointHeat_Ub", i, "pb", sppb, opt, runTime.timeName());
 
     if (simple.finalNonOrthogonalIter())
     {

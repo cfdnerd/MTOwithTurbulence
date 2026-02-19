@@ -1,3 +1,4 @@
+#include "solver_status.H"
 for(i=0;i<60;i++)
 {
 MRF.correctBoundaryVelocity(U);
@@ -19,7 +20,8 @@ fvOptions.constrain(UEqn);
 
 if (simple.momentumPredictor())
 {
-    solve(UEqn == -fvc::grad(p));
+    SolverPerformance<vector> spU = solve(UEqn == -fvc::grad(p));
+    logSolverStats("Primal_U", i, "U", spU, opt, runTime.timeName());
 
     fvOptions.correct(U);
 }
@@ -55,7 +57,8 @@ while (simple.correctNonOrthogonal())
 
     pEqn.setReference(pRefCell, pRefValue);
 
-    pEqn.solve();
+    SolverPerformance<scalar> spp = pEqn.solve();
+    logSolverStats("Primal_U", i, "p", spp, opt, runTime.timeName());
 
     if (simple.finalNonOrthogonalIter())
     {

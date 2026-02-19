@@ -1,3 +1,4 @@
+#include "solver_status.H"
 T=T2;
 // Turbulent thermal diffusivity: alphat = nut/Prt (IncompressibleTurbulenceModel has no alphat())
 const dimensionedScalar Prt("Prt", dimless, 0.85);
@@ -15,5 +16,6 @@ else
 {
  TEqn-=100000000.0/4180000*Q;
 }
-TEqn.solve();
+SolverPerformance<scalar> spT = TEqn.solve();
+logSolverStats("Primal_T", 0, "T", spT, opt, runTime.timeName());
 

@@ -1,3 +1,4 @@
+#include "solver_status.H"
 // Adjoint k-omega SST turbulence equations (sensitivity-consistent)
 // Solves adjoint ka, omegaa when RAS turbulence is active
 // See Kavvadias et al. (2014) for full derivation
@@ -27,7 +28,8 @@
             + fvm::Sp(betaStar*omega, ka)
         );
         kaEqn.relax();
-        kaEqn.solve();
+        SolverPerformance<scalar> spKa = kaEqn.solve();
+        logSolverStats("Adjoint_kOmegaSST", 0, "ka", spKa, opt, runTime.timeName());
 
         // Adjoint omega equation: -div(phi,omegaa) - div(DomegaEff*grad(omegaa)) + sources
         // Simplified: beta2*omega destruction term (beta2=0.0828 for SST)
@@ -38,6 +40,7 @@
             + fvm::Sp(scalar(2)*beta2.value()*omega, omegaa)  // beta2*omega destruction
         );
         omegaaEqn.relax();
-        omegaaEqn.solve();
+        SolverPerformance<scalar> spOmegaa = omegaaEqn.solve();
+        logSolverStats("Adjoint_kOmegaSST", 0, "omegaa", spOmegaa, opt, runTime.timeName());
     }
 }
