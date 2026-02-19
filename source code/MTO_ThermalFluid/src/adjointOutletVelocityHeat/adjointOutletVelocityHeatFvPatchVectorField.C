@@ -103,15 +103,11 @@ void Foam::adjointOutletVelocityHeatFvPatchVectorField::updateCoeffs()
     const fvsPatchField<scalar>& phip =
     	patch().lookupPatchField<surfaceScalarField, scalar>("phi");
     	
-    const dictionary& transportProperties = db().lookupObject<IOdictionary>("transportProperties");
-     dimensionedScalar nu(transportProperties.lookup("nu"));
-   //const incompressible::RASModel& rasModel =
-   // 	db().lookupObject<incompressible::RASModel>("RASProperties");
+    const scalarField& nueff =
+        db().lookupObject<volScalarField>("nuEff").boundaryField()[patch().index()];
 
-   // scalarField nueff = rasModel.nuEff()().boundaryField()[patch().index()];
-
-    const scalarField& deltainv = 
-    	patch().deltaCoeffs(); // dist^(-1) 
+    const scalarField& deltainv =
+        patch().deltaCoeffs(); // dist^(-1)
 
 //Primal velocity, mag of normal component and tangential component
     scalarField Up_ns = phip/patch().magSf();
@@ -123,7 +119,7 @@ void Foam::adjointOutletVelocityHeatFvPatchVectorField::updateCoeffs()
     vectorField Uaneigh_n = (Uaneigh & patch().nf())*patch().nf();
     vectorField Uaneigh_t = Uaneigh - Uaneigh_n;
 
-    vectorField Uap_t = (nu.value()*deltainv*Uaneigh_t) / (Up_ns+nu.value()*deltainv) ;
+    vectorField Uap_t = (nueff*deltainv*Uaneigh_t) / (Up_ns+nueff*deltainv);
 
     vectorField Uap_n = (phiap * patch().Sf())/(patch().magSf()*patch().magSf());
 

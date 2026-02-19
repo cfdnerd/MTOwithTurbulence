@@ -1,0 +1,49 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+|  Turbulent kinetic energy for kOmegaSST
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      k;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 2 -2 0 0 0 0];
+
+internalField   uniform 1e-6;
+
+boundaryField
+{
+    inlet
+    {
+        type            fixedValue;
+        value           uniform 1e-6;
+    }
+
+    outlet
+    {
+        type            inletOutlet;
+        inletValue      uniform 1e-6;
+    }
+
+    Wall
+    {
+        type            kqRWallFunction;
+        value           uniform 1e-6;
+    }
+
+    right
+    {
+        type            symmetry;
+    }
+
+    frontAndBack
+    {
+        type            empty;
+    }
+
+}
+
+// ************************************************************************* //

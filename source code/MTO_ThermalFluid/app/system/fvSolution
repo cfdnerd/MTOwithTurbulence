@@ -33,7 +33,7 @@ solvers
         smoother        GaussSeidel;
     }
 
-    "(U|Ua|Ub|Uc|k|epsilon)"
+    "(U|Ua|Ub|Uc|k|omega|ka|omegaa|epsilon)"
     {
         solver          smoothSolver;
         smoother        GaussSeidel;
@@ -85,7 +85,7 @@ relaxationFactors
     equations
     {
         "(U|Ua|Ub|Uc)"     0.7;
-        "(k|epsilon)"   0.7;
+        "(k|omega|ka|omegaa|epsilon)"   0.7;
     }
 }
 constraintFunctionDict_flow

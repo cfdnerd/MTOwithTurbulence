@@ -11,7 +11,7 @@ sumT=std::pow(sumT,1.0/Pnorm-1);
 fvScalarMatrix TEqnb
 (
    -fvm::div(-phi,Tb) 
-   +fvm::laplacian(DT, Tb)
+   +fvm::laplacian(alphaEff, Tb)
 );
 if (objFunction==1)
 {

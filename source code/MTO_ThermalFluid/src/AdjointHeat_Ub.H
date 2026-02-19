@@ -6,7 +6,7 @@ tmp<fvVectorMatrix> tUbEqn
 (
     fvm::div(-phi, Ub)
   + adjointTransposeConvectionb
-  - fvm::laplacian(nu,Ub)
+  - fvm::laplacian(turbulence->nuEff(), Ub)
   + fvm::Sp(alpha, Ub)
   + b1*Tb*fvc::grad(T)
  ==

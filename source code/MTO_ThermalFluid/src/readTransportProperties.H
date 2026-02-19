@@ -54,6 +54,19 @@ autoPtr<incompressible::turbulenceModel> turbulence
 (
     incompressible::turbulenceModel::New(U, phi, laminarTransport)
 );
+// nuEff registered for adjoint BCs (laminar: nuEff=nu; turbulent: nuEff=nu+nut)
+volScalarField nuEff
+(
+    IOobject
+    (
+        "nuEff",
+        runTime.timeName(),
+        mesh,
+        IOobject::NO_READ,
+        IOobject::AUTO_WRITE
+    ),
+    turbulence->nuEff()
+);
 //****************************************************************//adj-fluid-a
 Info<< "Reading field pa\n" << endl;
 volScalarField pa
@@ -154,6 +167,36 @@ setRefCell
     pbRefValue
 );
 mesh.setFluxRequired(pb.name());
+
+//*****************************************************// adjoint turbulence (ka, omegaa) - when RAS active
+volScalarField ka
+(
+    IOobject
+    (
+        "ka",
+        runTime.timeName(),
+        mesh,
+        IOobject::READ_IF_PRESENT,
+        IOobject::AUTO_WRITE
+    ),
+    mesh,
+    dimensionedScalar("ka", dimensionSet(0,2,-2,0,0,0,0), 0.0),
+    zeroGradientFvPatchScalarField::typeName
+);
+volScalarField omegaa
+(
+    IOobject
+    (
+        "omegaa",
+        runTime.timeName(),
+        mesh,
+        IOobject::READ_IF_PRESENT,
+        IOobject::AUTO_WRITE
+    ),
+    mesh,
+    dimensionedScalar("omegaa", dimensionSet(0,0,-1,0,0,0,0), 0.0),
+    zeroGradientFvPatchScalarField::typeName
+);
 
 //*****************************************************//
 volScalarField gsensPowerDiss

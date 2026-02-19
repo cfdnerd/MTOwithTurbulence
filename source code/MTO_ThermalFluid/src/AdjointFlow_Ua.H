@@ -6,7 +6,7 @@ for(i=0;i<40;i++)
   (
       fvm::div(-phi, Ua)
     + adjointTransposeConvectiona
-    - fvm::laplacian(nu,Ua)
+    - fvm::laplacian(turbulence->nuEff(), Ua)
     + fvm::Sp(alpha, Ua)
    ==
       fvOptions(Ua)

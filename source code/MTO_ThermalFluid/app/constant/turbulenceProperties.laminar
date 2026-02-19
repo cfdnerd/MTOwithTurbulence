@@ -1,7 +1,5 @@
 /*--------------------------------*- C++ -*----------------------------------*\
-|  turbulenceProperties
-|  Set simulationType laminar; for laminar flow (e.g. baseline validation)
-|  Set simulationType RAS; for k-omega SST turbulence
+|  Laminar - copy to turbulenceProperties for laminar baseline
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
@@ -12,19 +10,13 @@ FoamFile
     object      turbulenceProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-simulationType RAS;
-//simulationType laminar;
+simulationType laminar;
 
 RAS
 {
-    RASModel        kOmegaSST;
-    turbulence      on;
+    RASModel        laminar;
+    turbulence      off;
     printCoeffs     off;
-    // Curvature correction: use kOmegaSSTCC when library is built (see docs)
-    // kOmegaSSTCoeffs
-    // {
-    //     curvatureCorrection on;  // Spalart-Shur fr1 when available
-    // }
 }
 
 

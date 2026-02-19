@@ -1,8 +1,9 @@
 T=T2;
+volScalarField alphaEff(DT + turbulence->alphat());
 fvScalarMatrix TEqn
 (
     fvm::div(phi,T)
-   -fvm::laplacian(DT, T)
+   -fvm::laplacian(alphaEff, T)
 );
 if(DDHS)
 {

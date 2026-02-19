@@ -1,5 +1,6 @@
 //***********************************//update mu and lambda
 opt++;
+nuEff = turbulence->nuEff();
 if(solid_area)
 {
    forAll(cells_solid, i)

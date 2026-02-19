@@ -24,9 +24,11 @@ int main(int argc, char *argv[])
     while (simple.loop(runTime))
     {
         #include "update.H"
+        turbulence->correct();
         #include "Primal_U.H"
         #include "Primal_T.H"
         #include "AdjointHeat_Tb.H"
+        #include "Adjoint_kOmegaSST.H"
         #include "AdjointHeat_Ub.H"
         #include "AdjointFlow_Ua.H"
         #include "costfunction.H"              
