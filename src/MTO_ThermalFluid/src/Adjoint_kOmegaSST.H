@@ -25,8 +25,17 @@
         volScalarField DomegaEff("DomegaEff", nu + alphaOmega1*nut);
 
         // RHS: source from momentum (d(nut)/dk * dev2(twoSymm(grad(U))) : grad(Ua))
-        volScalarField kaRhsMomentum(-dNutdk*(dev2(twoSymm(fvc::grad(U))) && fvc::grad(Ua)));
-        volScalarField omegaaRhsMomentum(-dNutdOmega*(dev2(twoSymm(fvc::grad(U))) && fvc::grad(Ua)));
+        // Raw term has dim [0 0 -1]; ka eqn needs [0 2 -3], omegaa eqn needs [0 0 -2]
+        // Scale: ka by k, omegaa by omega (to match equation dimensions)
+        volScalarField kaRhsMomentum
+        (
+            (k + kSmall)*(-dNutdk*(dev2(twoSymm(fvc::grad(U))) && fvc::grad(Ua)))
+        );
+        volScalarField omegaaRhsMomentum
+        (
+            (omega + omegaSmall)*(omega + omegaSmall)/(k + kSmall)
+           *(-dNutdOmega*(dev2(twoSymm(fvc::grad(U))) && fvc::grad(Ua)))
+        );
 
         // RHS: thermal source (objFunction 1) deferred - grad(T)&grad(Tb) has wrong dimensions
         // for ka/omegaa eqns; needs proper non-dimensionalization (Tb scale, rhoc, etc.)
