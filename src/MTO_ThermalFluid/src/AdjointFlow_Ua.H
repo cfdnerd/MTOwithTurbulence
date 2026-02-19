@@ -13,9 +13,9 @@ for(i=0;i<40;i++)
       const dimensionedScalar gamma1("gamma1", dimless, 5.0/9.0);
       const dimensionedScalar kSmall("kSmall", dimArea/dimTime/dimTime, 1e-10);
       const dimensionedScalar omegaSmall("omegaSmall", dimless/dimTime, 1e-10);
-      // Adjoint momentum source: raw terms have [0 3 -4] and [0 1 -3]; scale by 1/k and 1/omega to get [0 1 -2]
+      // Adjoint momentum source: scale to [0 1 -2]. ka-term: div/(k); omegaa-term: div/(omega)*nut
       turbSourceUa = -fvc::div(ka*2*nut*twoSymm(fvc::grad(U)))/(k + kSmall)
-                     -fvc::div(omegaa*2*gamma1*twoSymm(fvc::grad(U)))/(omega + omegaSmall);
+                     -nut*fvc::div(omegaa*2*gamma1*twoSymm(fvc::grad(U)))/(omega + omegaSmall);
   }
 
   tmp<fvVectorMatrix> tUaEqn
