@@ -9,11 +9,11 @@ fvScalarMatrix TEqn
 );
 if(DDHS)
 {
- TEqn-=100000000.0/4180000*Q*(1-xh);
+ TEqn-=heatSource/rhoc*(1-xh);
 }
 else
 {
- TEqn-=100000000.0/4180000*Q;
+ TEqn-=heatSource/rhoc;
 }
 SolverPerformance<scalar> spT = TEqn.solve();
 logSolverStats(runTime, "Primal_T", 0, "T", spT, opt, runTime.timeName());

@@ -11,10 +11,13 @@ IOdictionary thermalProperties
     )
 );
 
-dimensionedScalar rhoc(thermalProperties.lookup("rhoc"));//rho_fluid*heat_capacity
+dimensionedScalar rho(thermalProperties.lookup("rho"));
+dimensionedScalar cp(thermalProperties.lookup("cp"));
+dimensionedScalar rhoc("rhoc", rho*cp);
 dimensionedScalar kf(thermalProperties.lookup("kf"));//Thermal Conductivity of fluid
 dimensionedScalar ks(thermalProperties.lookup("ks"));//Thermal Conductivity of solid
-dimensionedScalar Q("Q", dimensionSet(0,0,-1,1,0,0,0),1.0);
+dimensionedScalar heatSource(thermalProperties.lookup("heatSource"));//Volumetric heat source [W/m3]
+dimensionedScalar Q(thermalProperties.lookup("Q"));
 dimensionedScalar b2("b2", dimensionSet(0,0,-1,2-Pnorm,0,0,0),1);
 Switch DDHS(thermalProperties.lookup("DDHS"));//design dependent heat source
 volScalarField DT

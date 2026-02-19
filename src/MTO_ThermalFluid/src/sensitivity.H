@@ -4,7 +4,7 @@ Info<<"sensitivity analysis"<<endl;
 fsenshMeanT=-alphaMax*(1+qu)*qu/((qu+xh)*(qu+xh))*(U&Ub)+b1*(kf-ks)*(1+qu)*qu/((qu+xh)*(qu+xh))*(fvc::grad(T)&fvc::grad(Tb))/rhoc;
 if(DDHS)//design dependent heat source
 {
- fsenshMeanT += b1*Tb*100000000.0/4180000*Q;
+ fsenshMeanT += b1*Tb*heatSource/rhoc;
 }
 gsenshPowerDiss=-alphaMax*(1+qu)*qu/((qu+xh)*(qu+xh))*(U&Ua);
 
