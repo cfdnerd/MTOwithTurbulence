@@ -22,13 +22,13 @@ mma_dec             0.7;
 mma_inc             1.2;
 movlim              0.4;
 filterR             2.5;
-PowerDiss0          1.57105e-07;
+PowerDiss0          1e-5;
 PowerDissMax        10;
 PowerDissRelax      25;
 GeoDim              2;
 fluid_area          yes;
 solid_area          no;
-test_area           no;
+test_area           yes;
 Pnorm               300;
 objFunction         1;
 
