@@ -18,7 +18,7 @@ for(i=0;i<40;i++)
   fvOptions.constrain(UaEqn);
 
   SolverPerformance<vector> spUa = solve(UaEqn == -fvc::grad(pa));
-  logSolverStats("AdjointFlow_Ua", i, "Ua", spUa, opt, runTime.timeName());
+  logSolverStats(runTime, "AdjointFlow_Ua", i, "Ua", spUa, opt, runTime.timeName());
 
   fvOptions.correct(Ua);
 //****************************************
@@ -53,7 +53,7 @@ for(i=0;i<40;i++)
 
       paEqn.setReference(paRefCell, paRefValue);
       SolverPerformance<scalar> sppa = paEqn.solve();
-      logSolverStats("AdjointFlow_Ua", i, "pa", sppa, opt, runTime.timeName());
+      logSolverStats(runTime, "AdjointFlow_Ua", i, "pa", sppa, opt, runTime.timeName());
 
       if (simple.finalNonOrthogonalIter())
       {

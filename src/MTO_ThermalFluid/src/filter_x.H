@@ -2,7 +2,7 @@
 {
     fvScalarMatrix xpEqn(fvm::laplacian(xp)-fvm::Sp(b,xp)+x*b);
     SolverPerformance<scalar> spXp = xpEqn.solve();
-    logSolverStats("filter_x", 0, "xp", spXp, opt, runTime.timeName());
+    logSolverStats(runTime, "filter_x", 0, "xp", spXp, opt, runTime.timeName());
 }
 //***********************************//Heaviside_filter
 del=Foam::min(0.2*opt,100);

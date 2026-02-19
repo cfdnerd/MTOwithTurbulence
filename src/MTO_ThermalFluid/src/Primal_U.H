@@ -20,7 +20,7 @@ fvOptions.constrain(UEqn);
 if (simple.momentumPredictor())
 {
     SolverPerformance<vector> spU = solve(UEqn == -fvc::grad(p));
-    logSolverStats("Primal_U", i, "U", spU, opt, runTime.timeName());
+    logSolverStats(runTime, "Primal_U", i, "U", spU, opt, runTime.timeName());
 
     fvOptions.correct(U);
 }
@@ -57,7 +57,7 @@ while (simple.correctNonOrthogonal())
     pEqn.setReference(pRefCell, pRefValue);
 
     SolverPerformance<scalar> spp = pEqn.solve();
-    logSolverStats("Primal_U", i, "p", spp, opt, runTime.timeName());
+    logSolverStats(runTime, "Primal_U", i, "p", spp, opt, runTime.timeName());
 
     if (simple.finalNonOrthogonalIter())
     {

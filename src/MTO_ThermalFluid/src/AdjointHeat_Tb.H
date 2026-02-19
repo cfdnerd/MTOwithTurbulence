@@ -22,4 +22,4 @@ if (objFunction==2)
    TEqnb -= b2*sumT*Foam::pow(T/maxT,Pnorm-1);
 }
 SolverPerformance<scalar> spTb = TEqnb.solve();
-logSolverStats("AdjointHeat_Tb", 0, "Tb", spTb, opt, runTime.timeName());
+logSolverStats(runTime, "AdjointHeat_Tb", 0, "Tb", spTb, opt, runTime.timeName());

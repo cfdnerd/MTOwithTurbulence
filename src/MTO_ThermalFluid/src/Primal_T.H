@@ -16,5 +16,5 @@ else
  TEqn-=100000000.0/4180000*Q;
 }
 SolverPerformance<scalar> spT = TEqn.solve();
-logSolverStats("Primal_T", 0, "T", spT, opt, runTime.timeName());
+logSolverStats(runTime, "Primal_T", 0, "T", spT, opt, runTime.timeName());
 

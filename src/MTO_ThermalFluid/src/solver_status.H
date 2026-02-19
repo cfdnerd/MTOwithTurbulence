@@ -8,15 +8,14 @@
 
 #include "OFstream.H"
 
-//- Log solver performance to solver_status.log (master rank only)
-//  Format: optIter,timeStep,block,outerIter,equation,initRes,finalRes,nIter,converged,singular
-template<class Type>
+//- Log solver performance to solver_status.log (master rank only) - scalar
 inline void logSolverStats
 (
+    const Time& runTime,
     const word& blockName,
     const label outerIter,
     const word& eqnName,
-    const SolverPerformance<Type>& sp,
+    const SolverPerformance<scalar>& sp,
     const label optIter,
     const word& timeName
 )
@@ -29,6 +28,40 @@ inline void logSolverStats
 
     const scalar initRes = sp.initialResidual();
     const scalar finRes = sp.finalResidual();
+
+    logFile << optIter << ","
+            << timeName << ","
+            << blockName << ","
+            << outerIter << ","
+            << eqnName << ","
+            << initRes << ","
+            << finRes << ","
+            << sp.nIterations() << ","
+            << (sp.converged() ? 1 : 0) << ","
+            << (sp.singular() ? 1 : 0)
+            << "\n";
+}
+
+//- Log solver performance to solver_status.log (master rank only) - vector
+inline void logSolverStats
+(
+    const Time& runTime,
+    const word& blockName,
+    const label outerIter,
+    const word& eqnName,
+    const SolverPerformance<vector>& sp,
+    const label optIter,
+    const word& timeName
+)
+{
+    if (!Pstream::master()) return;
+
+    const fileName logPath(runTime.path()/"solver_status.log");
+    OFstream logFile(logPath, IOstream::ASCII, IOstream::currentVersion, IOstream::UNCOMPRESSED, true);
+    if (!logFile.good()) return;
+
+    const scalar initRes = mag(sp.initialResidual());
+    const scalar finRes = mag(sp.finalResidual());
 
     logFile << optIter << ","
             << timeName << ","

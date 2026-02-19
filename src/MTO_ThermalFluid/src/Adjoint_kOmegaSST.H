@@ -28,7 +28,7 @@
         );
         kaEqn.relax();
         SolverPerformance<scalar> spKa = kaEqn.solve();
-        logSolverStats("Adjoint_kOmegaSST", 0, "ka", spKa, opt, runTime.timeName());
+        logSolverStats(runTime, "Adjoint_kOmegaSST", 0, "ka", spKa, opt, runTime.timeName());
 
         // Adjoint omega equation: -div(phi,omegaa) - div(DomegaEff*grad(omegaa)) + sources
         // Simplified: beta2*omega destruction term (beta2=0.0828 for SST)
@@ -40,6 +40,6 @@
         );
         omegaaEqn.relax();
         SolverPerformance<scalar> spOmegaa = omegaaEqn.solve();
-        logSolverStats("Adjoint_kOmegaSST", 0, "omegaa", spOmegaa, opt, runTime.timeName());
+        logSolverStats(runTime, "Adjoint_kOmegaSST", 0, "omegaa", spOmegaa, opt, runTime.timeName());
     }
 }

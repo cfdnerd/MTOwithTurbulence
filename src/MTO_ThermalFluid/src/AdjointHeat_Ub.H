@@ -19,7 +19,7 @@ UbEqn.relax();
 fvOptions.constrain(UbEqn);
 
 SolverPerformance<vector> spUb = solve(UbEqn == -fvc::grad(pb));
-logSolverStats("AdjointHeat_Ub", i, "Ub", spUb, opt, runTime.timeName());
+logSolverStats(runTime, "AdjointHeat_Ub", i, "Ub", spUb, opt, runTime.timeName());
 
 fvOptions.correct(Ub);
 //****************************************
@@ -52,7 +52,7 @@ while (simple.correctNonOrthogonal())
 
     pbEqn.setReference(pbRefCell, pbRefValue);
     SolverPerformance<scalar> sppb = pbEqn.solve();
-    logSolverStats("AdjointHeat_Ub", i, "pb", sppb, opt, runTime.timeName());
+    logSolverStats(runTime, "AdjointHeat_Ub", i, "pb", sppb, opt, runTime.timeName());
 
     if (simple.finalNonOrthogonalIter())
     {

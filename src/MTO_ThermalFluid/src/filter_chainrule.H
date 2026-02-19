@@ -23,17 +23,17 @@ if(opt>1)
 {
     fvScalarMatrix fsensEqn(fvm::laplacian(fsensMeanT)-fvm::Sp(b,fsensMeanT)+fsenshMeanT*b);
     SolverPerformance<scalar> spFsens = fsensEqn.solve();
-    logSolverStats("filter_chainrule", 0, "fsensMeanT", spFsens, opt, runTime.timeName());
+    logSolverStats(runTime, "filter_chainrule", 0, "fsensMeanT", spFsens, opt, runTime.timeName());
 }
 {
     fvScalarMatrix gsensEqn(fvm::laplacian(gsensPowerDiss)-fvm::Sp(b,gsensPowerDiss)+gsenshPowerDiss*b);
     SolverPerformance<scalar> spGsensP = gsensEqn.solve();
-    logSolverStats("filter_chainrule", 0, "gsensPowerDiss", spGsensP, opt, runTime.timeName());
+    logSolverStats(runTime, "filter_chainrule", 0, "gsensPowerDiss", spGsensP, opt, runTime.timeName());
 }
 {
     fvScalarMatrix gvolEqn(fvm::laplacian(gsensVol)-fvm::Sp(b,gsensVol)+gsenshVol*b);
     SolverPerformance<scalar> spGsensV = gvolEqn.solve();
-    logSolverStats("filter_chainrule", 0, "gsensVol", spGsensV, opt, runTime.timeName());
+    logSolverStats(runTime, "filter_chainrule", 0, "gsensVol", spGsensV, opt, runTime.timeName());
 }
 
 fsensMeanT.primitiveFieldRef()=fsensMeanT.primitiveFieldRef()*mesh.V()/gMax(mesh.V());
