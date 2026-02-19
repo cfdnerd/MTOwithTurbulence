@@ -16,6 +16,8 @@ if(fluid_area)
    }
 }
 xh.correctBoundaryConditions();
+xh = Foam::max(0.0, Foam::min(1.0, xh));
+xh.correctBoundaryConditions();
 if(runTime.writeTime())
 {
    xh.write();  

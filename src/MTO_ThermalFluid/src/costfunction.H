@@ -15,6 +15,9 @@ reduce(PowerDissActual, sumOp<scalar>());
 PowerDiss=PowerDissActual/PowerDiss0;
 // 2D scaling removed: not physically justified; tune PowerDiss0 for desired PowerDiss range
 
+const scalar xhMin = gMin(xh.primitiveField());
+const scalar xhMax = gMax(xh.primitiveField());
+
 if (Pstream::master())
 {
     const scalar elapsedTime = runTime.elapsedClockTime();
@@ -33,8 +36,8 @@ if (Pstream::master())
         optLog << "# ================================================================================\n";
         optLog << "# MTO_ThermalFluid Optimization History\n";
         optLog << "# ================================================================================\n";
-        optLog << "#  optIter  | PowerDissActual [W] | PowerDiss [-] |  MeanT [K]  |  maxT [K]  |     V [-]     | elapsedTime [s]\n";
-        optLog << "# ---------+---------------------+---------------+-------------+------------+---------------+------------------\n";
+        optLog << "#  optIter  | PowerDissActual [W] | PowerDiss [-] |  MeanT [K]  |  maxT [K]  |     V [-]     |   xhMin   |   xhMax   | elapsedTime [s]\n";
+        optLog << "# ---------+---------------------+---------------+-------------+------------+---------------+-----------+-----------+------------------\n";
     }
     optLog.width(9);  optLog << opt << " | ";
     optLog.width(19); optLog << PowerDissActual << " | ";
@@ -42,6 +45,8 @@ if (Pstream::master())
     optLog.width(11); optLog << MeanT << " | ";
     optLog.width(10); optLog << maxT << " | ";
     optLog.width(15); optLog << V << " | ";
+    optLog.width(11); optLog << xhMin << " | ";
+    optLog.width(11); optLog << xhMax << " | ";
     optLog.width(16); optLog << elapsedTime << "\n";
     optLog.close();
 }
