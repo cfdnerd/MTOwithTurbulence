@@ -20,7 +20,7 @@ solvers
     "(p|pa|pb|pc)"
     {
         solver          PBiCGStab;
-        preconditioner  DILU;
+        preconditioner  DIC;
         tolerance       1e-8;
         relTol          0.01;
     }
