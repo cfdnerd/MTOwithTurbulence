@@ -1,4 +1,3 @@
-#include "OFstream.H"
 Info<< "Initialization\n" << endl;
 if (Pstream::master())
 {
@@ -7,10 +6,6 @@ if (Pstream::master())
     std::remove(histFile.c_str());
     const fileName solverLogFile(caseRoot/"solver_status.log");
     std::remove(solverLogFile.c_str());
-    OFstream initLog(solverLogFile);
-    initLog << "# MTO_ThermalFluid solver_status.log - CSV format\n";
-    initLog << "# optIter,timeStep,block,outerIter,equation,initialResidual,finalResidual,nIterations,converged,singular\n";
-    initLog << "# (k,omega from turbulence->correct() are not logged)\n";
 } 
 
 int i=0,opt=0;

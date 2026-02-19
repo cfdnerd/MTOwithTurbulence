@@ -39,6 +39,7 @@ int main(int argc, char *argv[])
         #include "AdjointFlow_Ua.H"
         #include "costfunction.H"              
         #include "sensitivity.H"
+        #include "writeSolverStatus.H"
     }
     #include "finalize.H"
     return 0;
