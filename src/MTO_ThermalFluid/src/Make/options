@@ -22,5 +22,7 @@ EXE_LIBS = \
     -lfvOptions \
     -L$(PETSC_DIR)/$(PETSC_ARCH)/lib \
     -lpetsc \
+    -L/shared/home/azureuser/lib/openfoam/mto/ThirdParty-6/platforms/linux64Gcc/openmpi-1.10.7/lib \
+    -lmpi_cxx \
     -L$(FOAM_USER_LIBBIN) \
     -lMMA_yu 
