@@ -13,11 +13,7 @@ for (i=0; i<nObjPatch; i++)
 reduce(PowerDissActual, sumOp<scalar>());
 
 PowerDiss=PowerDissActual/PowerDiss0;
-if(GeoDim==2)
-{
-    // Use global domain area (not mesh.V()[0]) for parallel consistency and stable scaling
-    PowerDiss=PowerDiss/std::pow(area,1.0/3);
-}
+// 2D scaling removed: not physically justified; tune PowerDiss0 for desired PowerDiss range
 
 if (Pstream::master())
 {

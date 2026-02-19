@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
     {
         #include "update.H"
         turbulence->correct();
+        #include "clipTurbulence.H"
         #include "Primal_U.H"
         #include "Primal_T.H"
         #include "AdjointHeat_Tb.H"

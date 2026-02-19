@@ -2,6 +2,19 @@ for(i=0;i<40;i++)
 { 
   volVectorField adjointTransposeConvectiona((fvc::grad(U) & Ua));
 
+  volVectorField turbSourceUa(fvc::grad(pa) * scalar(0));  // zero by default
+  if (mesh.thisDb().foundObject<volScalarField>("k") && mesh.thisDb().foundObject<volScalarField>("omega"))
+  {
+      const volScalarField& ka = mesh.thisDb().lookupObject<volScalarField>("ka");
+      const volScalarField& omegaa = mesh.thisDb().lookupObject<volScalarField>("omegaa");
+      const volScalarField& nut = turbulence->nut();
+      const dimensionedScalar gamma1("gamma1", dimless, 5.0/9.0);  // SST gamma in inner region
+      // Adjoint momentum source from turbulence: from production Pk = nut*2|S|^2 and P_omega = gamma/nut*Pk
+      // Kavvadias: S_ka = -div(ka * dPk/d(grad U)), dPk/dS = 4*nut*S
+      turbSourceUa = -fvc::div(ka*2*nut*twoSymm(fvc::grad(U)))
+                     -fvc::div(omegaa*2*gamma1*twoSymm(fvc::grad(U)));
+  }
+
   tmp<fvVectorMatrix> tUaEqn
   (
       fvm::div(-phi, Ua)
@@ -17,7 +30,7 @@ for(i=0;i<40;i++)
 
   fvOptions.constrain(UaEqn);
 
-  SolverPerformance<vector> spUa = solve(UaEqn == -fvc::grad(pa));
+  SolverPerformance<vector> spUa = solve(UaEqn == -fvc::grad(pa) + turbSourceUa);
   logSolverStats(runTime, "AdjointFlow_Ua", i, "Ua", spUa, opt, runTime.timeName());
 
   fvOptions.correct(Ua);

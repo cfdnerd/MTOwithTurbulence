@@ -42,7 +42,7 @@
 
 ---
 
-### Phase 4: Adjoint Turbulence (ka, ωa) ✅
+### Phase 4: Adjoint Turbulence (ka, ωa) ✅ — Full Implementation (Feb 2025)
 
 **Changes:**
 - Added `ka` and `omegaa` fields in `readTransportProperties.H`
@@ -51,11 +51,16 @@
 - Added `0/ka` and `0/omegaa` initial conditions
 - Inserted `#include "Adjoint_kOmegaSST.H"` in main loop (before AdjointHeat_Ub, AdjointFlow_Ua)
 - Added ka, omegaa to fvSolution
+- **Adjoint momentum–turbulence coupling (S_ka, S_ωa):** Ua receives source terms from production Pk and P_omega (Kavvadias formulation)
+- **Adjoint ka, ωa RHS:** Momentum source `-dNutdk*(dev2(twoSymm(grad(U))) : grad(Ua))`; thermal source `(dNutdk/Prt)*(grad(T)&grad(Tb))` when objFunction=1
+- **clipTurbulence.H:** Brinkman k/ω bounds in high-α regions (after turbulence->correct())
+- **fvSchemes:** `div(phi,ka)` and `div(phi,omegaa)` with bounded Gauss upwind
+- **sensitivity.H:** Placeholder for turbulence–xh coupling (zero when Rk,Rω have no direct xh dependence)
+- **costfunction.H:** 2D PowerDiss scaling removed (not physically justified)
 
-**Known limitations:**
-1. **Source-term coupling:** Adjoint momentum (Ua) does not yet receive source terms from `d(ν_t)/dk * ka` and `d(ν_t)/dω * ωa`. Full Kavvadias formulation requires these for strict sensitivity consistency. Current implementation uses ν_eff in the viscous operator but omits the cross-coupling.
-2. **Adjoint BCs:** Adjoint k and ω use zeroGradient at walls; adjoint wall functions (Kavvadias-style) are not implemented.
-3. **Solve order:** ka and ωa are solved sequentially; iterative coupling may improve convergence for stiff cases.
+**Remaining:**
+- Adjoint wall BCs for ka, ωa: zeroGradient (adjoint wall functions deferred)
+- Solve order: lagged coupling (ka, ωa use previous Ua); iterative coupling possible for stiff cases
 
 ---
 
@@ -83,14 +88,16 @@
 
 ## Inconsistencies and Drawbacks for Further Correction
 
-| Issue | Severity | Action |
+| Issue | Severity | Status |
 |-------|----------|--------|
-| **Adjoint momentum–turbulence coupling** | High | Add source terms from `∂ν_t/∂k` and `∂ν_t/∂ω` into Ua equation (Kavvadias Sec. 3) |
-| **Curvature correction missing** | Medium | Build kOmegaSSTCC library; add to turbulenceProperties when available |
-| **Adjoint wall BCs** | Medium | Implement adjoint wall functions for ka, ωa at walls |
-| **Sensitivity to alphat** | Low | If objective depends on T, include ∂(αt)/∂k, ∂(αt)/∂ω in adjoint thermal chain |
-| **fvSchemes for k/ω** | Low | Consider `bounded Gauss upwind` for k, ω if positivity issues arise |
-| **Brinkman–turbulence stability** | Medium | Monitor k, ω in porous regions; enforce bounds in update if needed |
+| **Adjoint momentum–turbulence coupling** | High | ✅ Implemented (S_ka, S_ωa from production) |
+| **Adjoint ka, ωa RHS** | High | ✅ Implemented (momentum + alphat) |
+| **Brinkman k/ω bounds** | Medium | ✅ Implemented in clipTurbulence.H |
+| **Curvature correction missing** | Medium | Deferred — requires kOmegaSSTCC library |
+| **Adjoint wall BCs** | Medium | zeroGradient; adjoint wall functions deferred |
+| **Sensitivity turbulence terms** | Low | Placeholder; zero when no direct xh dependence |
+| **fvSchemes ka, ωa** | Low | ✅ bounded Gauss upwind |
+| **2D PowerDiss scaling** | — | ✅ Removed |
 
 ---
 

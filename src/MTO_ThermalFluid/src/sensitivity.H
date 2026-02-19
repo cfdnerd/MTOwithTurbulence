@@ -1,4 +1,3 @@
-
 Info<<"sensitivity analysis"<<endl;
 
 fsenshMeanT=-alphaMax*(1+qu)*qu/((qu+xh)*(qu+xh))*(U&Ub)+b1*(kf-ks)*(1+qu)*qu/((qu+xh)*(qu+xh))*(fvc::grad(T)&fvc::grad(Tb))/rhoc;
@@ -8,6 +7,9 @@ if(DDHS)//design dependent heat source
 }
 gsenshPowerDiss=-alphaMax*(1+qu)*qu/((qu+xh)*(qu+xh))*(U&Ua);
 
+// Turbulence sensitivity: ka*dRk/dxh + omegaa*dRomega/dxh
+// In standard formulation Rk,Romega do not depend on xh directly (no Brinkman in turbulence eqs)
+// Add gsenshPowerDiss += ka*dRk_dxh + omegaa*dRomega_dxh here when turbulence-xh coupling is implemented
 
 #include "filter_chainrule.H"
 
