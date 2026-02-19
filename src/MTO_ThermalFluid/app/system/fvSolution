@@ -35,8 +35,8 @@ solvers
     }
      "(T)"
     {
-        solver          PCG;
-        preconditioner  DILU;
+        solver          smoothSolver;
+        smoother        GaussSeidel;
         tolerance       1e-6;
         relTol          0;
     }  
