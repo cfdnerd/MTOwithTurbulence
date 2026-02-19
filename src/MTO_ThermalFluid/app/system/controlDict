@@ -46,16 +46,4 @@ timePrecision   12;
 
 runTimeModifiable true;
 libs ( "libOpenFOAM.so" "libgroovyBC.so" ) ;
-
-functions
-{
-    vtk
-    {
-        type            vtkWrite;
-        libs            (utilityFunctionObjects);
-        writeControl    timeStep;
-        writeInterval   5;
-        objects         (U p T xh);
-    }
-}
 // ************************************************************************* //
