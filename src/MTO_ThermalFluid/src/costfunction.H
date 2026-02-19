@@ -15,7 +15,8 @@ reduce(PowerDissActual, sumOp<scalar>());
 PowerDiss=PowerDissActual/PowerDiss0;
 if(GeoDim==2)
 {
-    PowerDiss=PowerDiss/std::pow(mesh.V()[0],1.0/3);
+    // Use global domain area (not mesh.V()[0]) for parallel consistency and stable scaling
+    PowerDiss=PowerDiss/std::pow(area,1.0/3);
 }
 
 if (Pstream::master())
