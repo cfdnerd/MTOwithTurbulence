@@ -35,9 +35,8 @@ solvers
     }
     T
     {
-        solver          smoothSolver;
-        smoother        GaussSeidel;
-        nSweeps         4;
+        solver          PBiCGStab;
+        preconditioner  DILU;
         tolerance       1e-6;
         relTol          0.05;
     }
