@@ -28,14 +28,10 @@
         volScalarField kaRhsMomentum(-dNutdk*(dev2(twoSymm(fvc::grad(U))) && fvc::grad(Ua)));
         volScalarField omegaaRhsMomentum(-dNutdOmega*(dev2(twoSymm(fvc::grad(U))) && fvc::grad(Ua)));
 
-        // RHS: source from thermal (objFunction 1) - alphat = nut/Prt, d(alphaEff)/dk = dNutdk/Prt
+        // RHS: thermal source (objFunction 1) deferred - grad(T)&grad(Tb) has wrong dimensions
+        // for ka/omegaa eqns; needs proper non-dimensionalization (Tb scale, rhoc, etc.)
         volScalarField kaRhsThermal(kaRhsMomentum * 0.0);
         volScalarField omegaaRhsThermal(omegaaRhsMomentum * 0.0);
-        if (objFunction == 1)
-        {
-            kaRhsThermal = (dNutdk/Prt)*(fvc::grad(T) & fvc::grad(Tb));
-            omegaaRhsThermal = (dNutdOmega/Prt)*(fvc::grad(T) & fvc::grad(Tb));
-        }
 
         // Adjoint k equation: -div(phi,ka) - div(DkEff*grad(ka)) + beta*omega*ka = RHS
         fvScalarMatrix kaEqn
