@@ -20,7 +20,7 @@ voluse              0.4;
 mma_init            0.3;
 mma_dec             0.7;
 mma_inc             1.1;
-movlim              0.2;
+movlim              0.15;
 filterR             3.0;
 PowerDiss0          1e-12;
 PowerDissMax        10;

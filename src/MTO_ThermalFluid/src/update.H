@@ -39,5 +39,5 @@ if(opt>=80)
 qu=Foam::min(qu,0.01);
 const volScalarField xhSafe(Foam::max(xh, scalar(0.01)));
 volScalarField alphaRaw(alphaMax*qu*(1-xhSafe)/(qu+xhSafe));
-alpha=Foam::min(alphaRaw, dimensionedScalar("alphaCap", alphaRaw.dimensions(), 1e4));
+alpha=Foam::min(alphaRaw, dimensionedScalar("alphaCap", alphaRaw.dimensions(), 5e3));
 DT=(ks+(kf-ks)*xh*(1+qu)/(qu+xh))/rhoc;
