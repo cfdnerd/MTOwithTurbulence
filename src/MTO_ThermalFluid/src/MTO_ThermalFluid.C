@@ -1,6 +1,8 @@
 //Author: Yu Minghao    Updated: May 2020 
 
 static char help[] = "topology optimization of fluid problem\n";
+#define MPI_NO_CPPBIND 1
+#include "mpi.h"
 #include "fvCFD.H"
 #include "singlePhaseTransportModel.H"
 #include "turbulentTransportModel.H"
@@ -11,6 +13,10 @@ static char help[] = "topology optimization of fluid problem\n";
 
 int main(int argc, char *argv[])
 {
+    int mpiInitialized = 0;
+    MPI_Initialized(&mpiInitialized);
+    if (!mpiInitialized) MPI_Init(&argc, &argv);
+
     #include "setRootCase.H"
     #include "createTime.H"
     #include "createMesh.H"
