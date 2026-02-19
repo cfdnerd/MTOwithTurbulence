@@ -19,11 +19,12 @@ solvers
 {
     "(p|pa|pb|pc)"
     {
-        solver          PBiCGStab;
-        preconditioner  FDIC;
+        solver          GAMG;
+        smoother        DICGaussSeidel;
         tolerance       1e-8;
         relTol          0.01;
         maxIter         500;
+        nCellsInCoarsestLevel 10;
     }
 
     "(U|Ua|Ub|Uc|k|omega|ka|omegaa|epsilon)"
