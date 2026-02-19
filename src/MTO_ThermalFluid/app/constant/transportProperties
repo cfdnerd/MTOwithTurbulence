@@ -19,7 +19,7 @@ transportModel  Newtonian;
 
 nu                           nu [0 2 -1 0 0 0 0] 1.0e-6;
 alphaMax               alphaMax [0 0 -1 0 0 0 0] 2.5e3;
-alphaMAX               alphaMAX [0 0 -1 0 0 0 0] 1e5;
+alphaMAX               alphaMAX [0 0 -1 0 0 0 0] 5e4;
 /*
 alphamax=nu/(L^2*Da)=1e-6/(2e-3)^2/Da=1/(4*Da)
 Da=10^-4, alphamax=2.5e3;

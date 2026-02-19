@@ -22,7 +22,8 @@ solvers
         solver          PBiCGStab;
         preconditioner  FDIC;
         tolerance       1e-8;
-        relTol          0.001;
+        relTol          0.005;
+        maxIter         500;
     }
 
     "(U|Ua|Ub|Uc|k|omega|ka|omegaa|epsilon)"
