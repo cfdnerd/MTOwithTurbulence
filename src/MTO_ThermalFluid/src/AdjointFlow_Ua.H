@@ -41,7 +41,6 @@ for(i=0;i<40;i++)
   volScalarField rAUa(1.0/UaEqn.A());
   volVectorField HbyAa("HbyAa", Ua);
   HbyAa = rAUa*UaEqn.H();
-  tUaEqn.clear();          
   surfaceScalarField phiHbyAa("phiHbyAa", fvc::flux(HbyAa));
   adjustPhi(phiHbyAa, Ua, pa);
   
@@ -54,7 +53,6 @@ for(i=0;i<40;i++)
           fvc::interpolate(rAtUa() - rAUa)*fvc::snGrad(pa)*mesh.magSf();
       HbyAa -= (rAUa - rAtUa())*fvc::grad(pa);
   }
-
   tUaEqn.clear();
 
   // Update the pressure BCs to ensure flux consistency
@@ -64,7 +62,7 @@ for(i=0;i<40;i++)
   {
       fvScalarMatrix paEqn
       (
-          fvm::laplacian(rAUa, pa) == fvc::div(phiHbyAa)
+          fvm::laplacian(rAtUa(), pa) == fvc::div(phiHbyAa)
       );
 
       paEqn.setReference(paRefCell, paRefValue);
@@ -83,7 +81,7 @@ for(i=0;i<40;i++)
   pa.relax();
 
   // Adjoint momentum corrector
-  Ua = HbyAa - rAUa*fvc::grad(pa);
+  Ua = HbyAa - rAtUa()*fvc::grad(pa);
   Ua.correctBoundaryConditions();
   fvOptions.correct(Ua);
   
