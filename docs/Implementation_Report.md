@@ -53,7 +53,7 @@
 - Added ka, omegaa to fvSolution
 - **Adjoint momentum–turbulence coupling (S_ka, S_ωa):** Ua receives source terms from production Pk and P_omega (Kavvadias formulation)
 - **Adjoint ka, ωa RHS:** Momentum source `-dNutdk*(dev2(twoSymm(grad(U))) : grad(Ua))`; thermal source `(dNutdk/Prt)*(grad(T)&grad(Tb))` when objFunction=1
-- **clipTurbulence.H:** Brinkman k/ω bounds in high-α regions (after turbulence->correct())
+- **clipTurbulence:** Removed — direct modification of k,ω via const_cast conflicted with kOmegaSST internal state (G lookup)
 - **fvSchemes:** `div(phi,ka)` and `div(phi,omegaa)` with bounded Gauss upwind
 - **sensitivity.H:** Placeholder for turbulence–xh coupling (zero when Rk,Rω have no direct xh dependence)
 - **costfunction.H:** 2D PowerDiss scaling removed (not physically justified)
@@ -92,7 +92,7 @@
 |-------|----------|--------|
 | **Adjoint momentum–turbulence coupling** | High | ✅ Implemented (S_ka, S_ωa from production) |
 | **Adjoint ka, ωa RHS** | High | ✅ Implemented (momentum + alphat) |
-| **Brinkman k/ω bounds** | Medium | ✅ Implemented in clipTurbulence.H |
+| **Brinkman k/ω bounds** | Medium | Removed — conflicts with turbulence model internals |
 | **Curvature correction missing** | Medium | Deferred — requires kOmegaSSTCC library |
 | **Adjoint wall BCs** | Medium | zeroGradient; adjoint wall functions deferred |
 | **Sensitivity turbulence terms** | Low | Placeholder; zero when no direct xh dependence |
