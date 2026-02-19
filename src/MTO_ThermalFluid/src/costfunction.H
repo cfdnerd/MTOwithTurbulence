@@ -22,7 +22,14 @@ reduce(PowerDiss, sumOp<scalar>());
 if (Pstream::master())
 {
     const scalar elapsedTime = runTime.elapsedClockTime();
-    ofstream optLog("optimization.hst", std::ios::app);
+    const fileName histFile(runTime.path()/"optimization.hst");
+    ofstream optLog(histFile.c_str(), std::ios::app);
+    if (!optLog.good())
+    {
+        FatalErrorInFunction
+            << "Cannot open " << histFile << " for writing"
+            << exit(FatalError);
+    }
     optLog.setf(std::ios::scientific);
     optLog.precision(6);
     if (opt == 1)

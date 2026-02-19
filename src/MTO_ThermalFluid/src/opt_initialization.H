@@ -1,5 +1,9 @@
 Info<< "Initialization\n" << endl;
-std::remove("optimization.hst"); 
+if (Pstream::master())
+{
+    const fileName histFile(runTime.path()/"optimization.hst");
+    std::remove(histFile.c_str());
+} 
 
 int i=0,opt=0;
 double del=0;
