@@ -1,5 +1,7 @@
 T=T2;
-volScalarField alphaEff(DT + turbulence->alphat());
+// Turbulent thermal diffusivity: alphat = nut/Prt (IncompressibleTurbulenceModel has no alphat())
+const dimensionedScalar Prt("Prt", dimless, 0.85);
+volScalarField alphaEff(DT + turbulence->nut()/Prt);
 fvScalarMatrix TEqn
 (
     fvm::div(phi,T)

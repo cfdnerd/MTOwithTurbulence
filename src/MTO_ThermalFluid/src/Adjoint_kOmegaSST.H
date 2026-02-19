@@ -2,10 +2,10 @@
 // Solves adjoint ka, omegaa when RAS turbulence is active
 // See Kavvadias et al. (2014) for full derivation
 {
-    if (db().foundObject<volScalarField>("k") && db().foundObject<volScalarField>("omega"))
+    if (mesh.thisDb().foundObject<volScalarField>("k") && mesh.thisDb().foundObject<volScalarField>("omega"))
     {
-        const volScalarField& k = db().lookupObject<volScalarField>("k");
-        const volScalarField& omega = db().lookupObject<volScalarField>("omega");
+        const volScalarField& k = mesh.thisDb().lookupObject<volScalarField>("k");
+        const volScalarField& omega = mesh.thisDb().lookupObject<volScalarField>("omega");
         const volScalarField& nut = turbulence->nut();
         const volScalarField& nuEff = turbulence->nuEff();
 

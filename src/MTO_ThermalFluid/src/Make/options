@@ -1,5 +1,5 @@
-# OpenFOAM 6, PETSc v3.12, OpenMPI 1.10.7
-# Turbulence (k-omega SST, adjoint ka/omegaa) uses OpenFOAM turbulence libs above.
+/* OpenFOAM 6, PETSc v3.12, OpenMPI 1.10.7
+   Turbulence (k-omega SST, adjoint ka/omegaa) uses OpenFOAM turbulence libs above. */
 
 EXE_INC = \
     -I$(LIB_SRC)/TurbulenceModels/turbulenceModels/lnInclude \
