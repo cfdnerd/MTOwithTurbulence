@@ -17,7 +17,6 @@ if(GeoDim==2)
 {
     PowerDiss=PowerDiss/std::pow(mesh.V()[0],1.0/3);
 }
-reduce(PowerDiss, sumOp<scalar>());
 
 if (Pstream::master())
 {
