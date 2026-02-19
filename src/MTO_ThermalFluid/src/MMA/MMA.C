@@ -130,7 +130,7 @@ double MMA::DualResidual(std::vector<double> &x, double epsi)
     {
         res[i] = resGlb[i];
     }
-	for (int j = 0; j < m; j++)
+    for (int j = 0; j < m; j++)
     {
         res[j] += -b[j] - a[j] * z - y[j] + mu[j];
         res[j + m] += mu[j] * lam[j] - epsi;
@@ -332,7 +332,6 @@ void MMA::DualGrad(std::vector<double> &x)
     }
     std::vector<double> gradGlb(grad);
     MPI_Allreduce(&grad.front(), &gradGlb.front(), m, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
     for (int j = 0; j < m; j++)
     {
         grad[j] = gradGlb[j] - b[j] - a[j] * z - y[j];

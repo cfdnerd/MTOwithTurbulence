@@ -1,5 +1,8 @@
 /* OpenFOAM 6, PETSc v3.12, OpenMPI 1.10.7
-   Turbulence (k-omega SST, adjoint ka/omegaa) uses OpenFOAM turbulence libs above. */
+   Turbulence (k-omega SST, adjoint ka/omegaa) uses OpenFOAM turbulence libs above.
+   OpenMPI: include from include/, libs from lib64/ */
+
+OMPI_ROOT = /shared/home/azureuser/lib/openfoam/mto/ThirdParty-6/platforms/linux64Gcc/openmpi-1.10.7
 
 EXE_INC = \
     -I$(LIB_SRC)/TurbulenceModels/turbulenceModels/lnInclude \
@@ -12,7 +15,7 @@ EXE_INC = \
     -I$(PETSC_DIR)/include \
     -I$(PETSC_DIR)/include/mpiuni \
     -I$(PETSC_DIR)/$(PETSC_ARCH)/include \
-    -I/shared/home/azureuser/lib/openfoam/mto/ThirdParty-6/platforms/linux64Gcc/openmpi-1.10.7/include 
+    -I$(OMPI_ROOT)/include
 EXE_LIBS = \
     -lturbulenceModels \
     -lincompressibleTurbulenceModels \
@@ -22,7 +25,8 @@ EXE_LIBS = \
     -lfvOptions \
     -L$(PETSC_DIR)/$(PETSC_ARCH)/lib \
     -lpetsc \
-    -L/shared/home/azureuser/lib/openfoam/mto/ThirdParty-6/platforms/linux64Gcc/openmpi-1.10.7/lib \
+    -L$(OMPI_ROOT)/lib64 \
     -lmpi_cxx \
+    -lmpi \
     -L$(FOAM_USER_LIBBIN) \
-    -lMMA_yu 
+    -lMMA_yu
