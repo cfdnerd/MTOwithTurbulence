@@ -29,7 +29,7 @@ if(opt<=63)
 }
 if(opt>100)
 {
-  alphaMax=alphaMax*1.05;
+  alphaMax=alphaMax*1.02;
 }
 alphaMax.value()=Foam::min(alphaMax.value(),alphaMAX.value());
 if(opt>=80)

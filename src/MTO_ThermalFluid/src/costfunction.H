@@ -56,5 +56,6 @@ if (Pstream::master())
 if(runTime.writeTime())
 {
    T.write();
-   //U.write();
+   U.write();
+   p.write();
 }
