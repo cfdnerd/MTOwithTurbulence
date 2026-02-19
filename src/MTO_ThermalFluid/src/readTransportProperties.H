@@ -54,8 +54,8 @@ autoPtr<incompressible::turbulenceModel> turbulence
 (
     incompressible::turbulenceModel::New(U, phi, laminarTransport)
 );
-// nuEff registered for adjoint BCs (laminar: nuEff=nu; turbulent: nuEff=nu+nut)
-volScalarField* nuEffPtr = new volScalarField
+// nuEff for adjoint BCs (laminar: nuEff=nu; turbulent: nuEff=nu+nut)
+volScalarField nuEff
 (
     IOobject
     (
@@ -67,8 +67,6 @@ volScalarField* nuEffPtr = new volScalarField
     ),
     turbulence->nuEff()
 );
-mesh.objectRegistry::store(nuEffPtr);
-volScalarField& nuEff = *nuEffPtr;
 //****************************************************************//adj-fluid-a
 Info<< "Reading field pa\n" << endl;
 volScalarField pa

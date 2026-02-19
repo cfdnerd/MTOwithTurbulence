@@ -1,42 +1,35 @@
 Info<<"cost function"<<endl;
 MeanT=fvc::domainIntegrate(T).value()/area;
-V=fvc::domainIntegrate(xh).value()/area-(voluse+0*Foam::max(0,0.5-opt*0.015));  
+V=fvc::domainIntegrate(xh).value()/area-(voluse+0*Foam::max(0,0.5-opt*0.015));
 
-PowerDiss=0;
+// Actual (raw) power dissipation before normalization
+scalar PowerDissActual = 0;
 for (i=0; i<nObjPatch; i++)
 {
-     PowerDiss =PowerDiss - sum(
-     phi.boundaryField()[conPatchList[i]]*(p.boundaryField()[conPatchList[i]]
-     + 0.5*magSqr(U.boundaryField()[conPatchList[i]]))); 
+    PowerDissActual = PowerDissActual - sum(
+        phi.boundaryField()[conPatchList[i]]*(p.boundaryField()[conPatchList[i]]
+        + 0.5*magSqr(U.boundaryField()[conPatchList[i]])));
 }
-PowerDiss=PowerDiss/PowerDiss0;
+reduce(PowerDissActual, sumOp<scalar>());
+
+PowerDiss=PowerDissActual/PowerDiss0;
 if(GeoDim==2)
 {
- PowerDiss=PowerDiss/std::pow(mesh.V()[0],1.0/3);
+    PowerDiss=PowerDiss/std::pow(mesh.V()[0],1.0/3);
 }
-reduce(PowerDiss, sumOp<scalar>()); 
+reduce(PowerDiss, sumOp<scalar>());
 
 if (Pstream::master())
-{ 
-   ofstream outfile1("Voluse.txt",std::ios::app);
-   outfile1<<V<<"\n";
-   outfile1.close();
-
-   ofstream outfile2("PowerDiss.txt",std::ios::app);
-   outfile2<<PowerDiss<<"\n";
-   outfile2.close(); 
-
-   ofstream outfile3("MeanT.txt",std::ios::app);
-   outfile3<<MeanT<<"\n";
-   outfile3.close(); 
-
-   ofstream outfile4("Time.txt",std::ios::app);
-   outfile4<<runTime.elapsedClockTime()<<"\n";
-   outfile4.close();    
-
-   ofstream outfile5("maxT.txt",std::ios::app);
-   outfile5<<maxT<<"\n";
-   outfile5.close();
+{
+    const scalar elapsedTime = runTime.elapsedClockTime();
+    ofstream optLog("optimization.hst", std::ios::app);
+    if (opt == 1)
+    {
+        optLog << "# optIter PowerDissActual PowerDiss MeanT maxT V elapsedTime[s]\n";
+    }
+    optLog << opt << " " << PowerDissActual << " " << PowerDiss << " " << MeanT
+           << " " << maxT << " " << V << " " << elapsedTime << "\n";
+    optLog.close();
 }
 if(runTime.writeTime())
 {

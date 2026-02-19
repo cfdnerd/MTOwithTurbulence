@@ -1,9 +1,5 @@
 Info<< "Initialization\n" << endl;
-std::remove("Voluse.txt");
-std::remove("Time.txt");
-std::remove("MeanT.txt"); 
-std::remove("maxT.txt");
-std::remove("PowerDiss.txt"); 
+std::remove("optimization.hst"); 
 
 int i=0,opt=0;
 double del=0;
