@@ -13,6 +13,7 @@ FoamFile
     object      blockMeshDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// Symmetric half-domain: right boundary is symmetry plane (full domain mirrored)
 convertToMeters 0.01;
 
 xMin 0;
@@ -21,7 +22,7 @@ yMin 0;
 yMax 1;
 zMin -0.003;
 zMax 0;
-xD 0.4;
+xD 0.4;  // symmetric half-domain: inlet width = xMax-xD = 0.1 = 1 mm (half of 2 mm full inlet)
 yDMin -0.2;
 yDMax 1.2;
 
@@ -114,7 +115,7 @@ boundary
     }
     right
     {
-        type symmetry;
+        type symmetry;  // symmetry plane (half-domain)
         faces
         (
             (1 2 12 11)

@@ -93,9 +93,4 @@ constraintFunctionDict_flow
     numberConstraintPatches      2;
     constraintPatchesNames       (inlet outlet);
 }
-constraintFunctionDict_solid
-{
-    numberConstraintPatches      1;
-    constraintPatchesNames       (force);
-}
 // ************************************************************************* //
