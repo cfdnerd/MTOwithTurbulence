@@ -27,11 +27,10 @@ solvers
     }
     "(p|pa|pb|pc)"
     {
-        solver          GAMG;
+        solver          PCG;
+        preconditioner  DIC;
         tolerance       1e-8;
         relTol          0.01;
-        smoother        GaussSeidel;
-        nCellsInCoarsestLevel 200;
     }
 
     "(U|Ua|Ub|Uc|k|omega|ka|omegaa|epsilon)"
