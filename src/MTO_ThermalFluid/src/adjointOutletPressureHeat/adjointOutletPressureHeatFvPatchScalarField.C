@@ -102,8 +102,9 @@ void Foam::adjointOutletPressureHeatFvPatchScalarField::updateCoeffs()
     const fvPatchField<vector>& Uap =
         patch().lookupPatchField<volVectorField, vector>("Ub");
 
-    const scalarField& nueff =
-        patch().boundaryMesh().mesh().lookupObject<volScalarField>("nuEff").boundaryField()[patch().index()];
+    const volScalarField& nu = patch().boundaryMesh().mesh().lookupObject<volScalarField>("nu");
+    const volScalarField& nut = patch().boundaryMesh().mesh().lookupObject<volScalarField>("nut");
+    scalarField nueff = nu.boundaryField()[patch().index()] + nut.boundaryField()[patch().index()];
 
     scalarField Up_n = phip / patch().magSf();//Primal
 

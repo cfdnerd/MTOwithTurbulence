@@ -103,8 +103,9 @@ void Foam::adjointOutletVelocityHeatFvPatchVectorField::updateCoeffs()
     const fvsPatchField<scalar>& phip =
     	patch().lookupPatchField<surfaceScalarField, scalar>("phi");
     	
-    const scalarField& nueff =
-        patch().boundaryMesh().mesh().lookupObject<volScalarField>("nuEff").boundaryField()[patch().index()];
+    const volScalarField& nu = patch().boundaryMesh().mesh().lookupObject<volScalarField>("nu");
+    const volScalarField& nut = patch().boundaryMesh().mesh().lookupObject<volScalarField>("nut");
+    scalarField nueff = nu.boundaryField()[patch().index()] + nut.boundaryField()[patch().index()];
 
     const scalarField& deltainv =
         patch().deltaCoeffs(); // dist^(-1)
