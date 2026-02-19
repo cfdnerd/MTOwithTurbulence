@@ -2,9 +2,10 @@
 Info<< "Initialization\n" << endl;
 if (Pstream::master())
 {
-    const fileName histFile(runTime.path()/"optimization.hst");
+    const fileName caseRoot(runTime.rootPath()/runTime.globalCaseName());
+    const fileName histFile(caseRoot/"optimization.hst");
     std::remove(histFile.c_str());
-    const fileName solverLogFile(runTime.path()/"solver_status.log");
+    const fileName solverLogFile(caseRoot/"solver_status.log");
     std::remove(solverLogFile.c_str());
     OFstream initLog(solverLogFile);
     initLog << "# MTO_ThermalFluid solver_status.log - CSV format\n";

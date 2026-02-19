@@ -22,7 +22,7 @@ reduce(PowerDiss, sumOp<scalar>());
 if (Pstream::master())
 {
     const scalar elapsedTime = runTime.elapsedClockTime();
-    const fileName histFile(runTime.path()/"optimization.hst");
+    const fileName histFile(runTime.rootPath()/runTime.globalCaseName()/"optimization.hst");
     ofstream optLog(histFile.c_str(), std::ios::app);
     if (!optLog.good())
     {

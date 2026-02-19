@@ -22,7 +22,7 @@ inline void logSolverStats
 {
     if (!Pstream::master()) return;
 
-    const fileName logPath(runTime.path()/"solver_status.log");
+    const fileName logPath(runTime.rootPath()/runTime.globalCaseName()/"solver_status.log");
     OFstream logFile(logPath, IOstream::ASCII, IOstream::currentVersion, IOstream::UNCOMPRESSED, true);
     if (!logFile.good()) return;
 
@@ -56,7 +56,7 @@ inline void logSolverStats
 {
     if (!Pstream::master()) return;
 
-    const fileName logPath(runTime.path()/"solver_status.log");
+    const fileName logPath(runTime.rootPath()/runTime.globalCaseName()/"solver_status.log");
     OFstream logFile(logPath, IOstream::ASCII, IOstream::currentVersion, IOstream::UNCOMPRESSED, true);
     if (!logFile.good()) return;
 
