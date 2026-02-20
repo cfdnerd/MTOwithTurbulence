@@ -34,7 +34,8 @@ for(i=0;i<maxAdjUaIter;i++)
 
       // Robust bound: keep turbulence source commensurate with pressure-gradient forcing
       const volVectorField gradPa(fvc::grad(pa));
-      const scalar gradPaAvg = Foam::max(gAverage(mag(gradPa).primitiveField()), 1e-12);
+      const volScalarField gradPaMag("gradPaMag", mag(gradPa));
+      const scalar gradPaAvg = Foam::max(gAverage(gradPaMag.primitiveField()), 1e-12);
       const scalar srcMaxAbs = Foam::max(1e2*gradPaAvg, 1e-2);
       forAll(turbSourceUa, cellI)
       {
