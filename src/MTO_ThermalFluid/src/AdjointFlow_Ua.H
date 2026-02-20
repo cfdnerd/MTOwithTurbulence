@@ -39,8 +39,8 @@ for(i=0;i<50;i++)
   fvOptions.correct(Ua);
 //****************************************
   volScalarField rAUa(1.0/UaEqn.A());
-  const scalar rAUaFloor = 1e-6 * gAverage(rAUa);
-  rAUa = max(rAUa, dimensionedScalar("rAUaFloor", rAUa.dimensions(), max(rAUaFloor, 1e-12)));
+  const scalar rAUaFloor = Foam::max(1e-5 * gAverage(rAUa), 1e-12);
+  rAUa = max(rAUa, dimensionedScalar("rAUaFloor", rAUa.dimensions(), rAUaFloor));
   volVectorField HbyAa("HbyAa", Ua);
   HbyAa = rAUa*UaEqn.H();
   surfaceScalarField phiHbyAa("phiHbyAa", fvc::flux(HbyAa));
@@ -51,7 +51,7 @@ for(i=0;i<50;i++)
    if (simple.consistent())
   {
       rAtUa = 1.0/(1.0/rAUa - UaEqn.H1());
-      rAtUa.ref() = max(rAtUa(), dimensionedScalar("rAtUaFloor", rAtUa().dimensions(), max(rAUaFloor, 1e-12)));
+      rAtUa.ref() = max(rAtUa(), dimensionedScalar("rAtUaFloor", rAtUa().dimensions(), rAUaFloor));
       phiHbyAa +=
           fvc::interpolate(rAtUa() - rAUa)*fvc::snGrad(pa)*mesh.magSf();
       HbyAa -= (rAUa - rAtUa())*fvc::grad(pa);

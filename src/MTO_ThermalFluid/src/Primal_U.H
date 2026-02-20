@@ -25,9 +25,9 @@ if (simple.momentumPredictor())
 }
 //****************************************//
 volScalarField rAU(1.0/UEqn.A());
-// Floor rAU to bound pressure matrix condition number (avoids FPE in PBiCGStab)
-const scalar rAUfloor = 1e-6 * gAverage(rAU);
-rAU = max(rAU, dimensionedScalar("rAUfloor", rAU.dimensions(), max(rAUfloor, 1e-12)));
+// Floor rAU to bound pressure matrix condition number (avoids FPE)
+const scalar rAUfloor = Foam::max(1e-5 * gAverage(rAU), 1e-12);
+rAU = max(rAU, dimensionedScalar("rAUfloor", rAU.dimensions(), rAUfloor));
 volVectorField HbyA(constrainHbyA(rAU*UEqn.H(), U, p));
 surfaceScalarField phiHbyA("phiHbyA", fvc::flux(HbyA));
 MRF.makeRelative(phiHbyA);
@@ -38,7 +38,7 @@ tmp<volScalarField> rAtU(rAU);
 if (simple.consistent())
 {
     rAtU = 1.0/(1.0/rAU - UEqn.H1());
-    rAtU.ref() = max(rAtU(), dimensionedScalar("rAtUfloor", rAtU().dimensions(), max(rAUfloor, 1e-12)));
+    rAtU.ref() = max(rAtU(), dimensionedScalar("rAtUfloor", rAtU().dimensions(), rAUfloor));
     phiHbyA +=
         fvc::interpolate(rAtU() - rAU)*fvc::snGrad(p)*mesh.magSf();
     HbyA -= (rAU - rAtU())*fvc::grad(p);

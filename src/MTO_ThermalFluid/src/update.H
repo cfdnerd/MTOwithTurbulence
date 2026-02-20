@@ -48,10 +48,11 @@ if(opt>=80)
   qu=0.005+(opt-80)*1e-4;
 }
 qu=Foam::min(qu,0.01);
-// Adaptive xh floor: when design is very solid-heavy (min xh low), raise floor to avoid alpha spikes
-scalar xhFloorVal = (gMin(xh) < 0.05) ? 0.02 : 1e-3;
+// Adaptive xh floor: when design is solid-heavy (min xh low), raise floor to avoid alpha spikes and FPE
+scalar xhMinVal = gMin(xh);
+scalar xhFloorVal = (xhMinVal < 0.15) ? 0.03 : ((xhMinVal < 0.05) ? 0.02 : 1e-3);
 const volScalarField xhSafe(Foam::max(xh, scalar(xhFloorVal)));
 volScalarField alphaRaw(alphaMax*qu*(1-xhSafe)/(qu+xhSafe));
-scalar alphaCapVal = Foam::min(scalar(1e4), alphaMaxMesh);
+scalar alphaCapVal = (xhMinVal < 0.15) ? Foam::min(scalar(3e3), alphaMaxMesh) : Foam::min(scalar(1e4), alphaMaxMesh);
 alpha=Foam::min(alphaRaw, dimensionedScalar("alphaCap", alphaRaw.dimensions(), alphaCapVal));
 DT=(ks+(kf-ks)*xh*(1+qu)/(qu+xh))/rhoc;
