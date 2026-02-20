@@ -9,6 +9,29 @@ surfaceScalarField phiaSafe(phia);
 for(i=0;i<maxAdjUaIter;i++)
 { 
   const word uaStage(word("UaLoop_") + Foam::name(i));
+  // In higher coupling passes, Tb can become temporarily non-physical and destabilize Ua solve.
+  // When that happens, keep last safe Ua/pa state and skip the corrective pass update.
+  if (pass > 0)
+  {
+      scalar tbAbsMaxNow = 0.0;
+      if (mesh.thisDb().foundObject<volScalarField>("Tb"))
+      {
+          const volScalarField& TbFld = mesh.thisDb().lookupObject<volScalarField>("Tb");
+          const volScalarField magTbNow("magTbNow", mag(TbFld));
+          tbAbsMaxNow = Foam::max(gMax(magTbNow.primitiveField()), 0.0);
+      }
+      MTOdiag::logMetric(runTime, opt, uaStage, "uaHigherPass_tbAbsMax", tbAbsMaxNow);
+      MTOdiag::logMetric(runTime, opt, uaStage, "uaHigherPass_tbAbsMaxLimit", adjUaHigherPassTbMax);
+      if (!std::isfinite(tbAbsMaxNow) || tbAbsMaxNow > adjUaHigherPassTbMax)
+      {
+          MTOdiag::logMetric(runTime, opt, uaStage, "uaHigherPass_skipped", 1.0);
+          Ua = UaSafe;
+          pa = paSafe;
+          phia = phiaSafe;
+          break;
+      }
+      MTOdiag::logMetric(runTime, opt, uaStage, "uaHigherPass_skipped", 0.0);
+  }
   const scalar rampDen = Foam::max(scalar(adjTurbRampEnd - adjTurbRampStart), scalar(1));
   const scalar rampXi = Foam::min
   (

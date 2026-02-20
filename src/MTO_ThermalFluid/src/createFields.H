@@ -46,6 +46,7 @@ label adjHeatRampEnd(optProperties.lookupOrDefault<label>("adjHeatRampEnd", 120)
 scalar adjUaPassDecay(optProperties.lookupOrDefault<scalar>("adjUaPassDecay", 0.35));
 scalar adjUaPassMinGain(optProperties.lookupOrDefault<scalar>("adjUaPassMinGain", 0.10));
 scalar adjUaLocalCapCoeff(optProperties.lookupOrDefault<scalar>("adjUaLocalCapCoeff", 200.0));
+scalar adjUaHigherPassTbMax(optProperties.lookupOrDefault<scalar>("adjUaHigherPassTbMax", 1e60));
 label diagLevel(optProperties.lookupOrDefault<label>("diagLevel", 1));
 label diagEvery(optProperties.lookupOrDefault<label>("diagEvery", 5));
 label diagRank(optProperties.lookupOrDefault<label>("diagRank", -1));

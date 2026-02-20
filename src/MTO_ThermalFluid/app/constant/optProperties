@@ -58,6 +58,7 @@ adjHeatRampEnd      120;       // Iteration to finish heat-adjoint beta ramp
 adjUaPassDecay      0.35;      // Extra Ua-source damping factor applied per adjoint pass (>0)
 adjUaPassMinGain    0.10;      // Minimum Ua-source gain floor for later adjoint passes
 adjUaLocalCapCoeff  200;       // Local Ua-source cap coefficient on U^2/L convective scale
+adjUaHigherPassTbMax 1e60;     // Skip higher-pass Ua update if |Tb| exceeds this trust threshold
 
 // ========================= Runtime Diagnostics ======================== //
 diagLevel           2;         // 0: off, 1: metrics, 2: full field-health logs
