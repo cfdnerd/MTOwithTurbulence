@@ -1,7 +1,8 @@
 // Tb equation robustness: avoid unconditional p-norm normalization and guard solve state.
 volScalarField TbSafe(Tb);
 sumT = 0;
-const scalar maxTAbs = Foam::max(gMax(mag(T).primitiveField()), 1e-12);
+const volScalarField magTNow("magTNow", mag(T));
+const scalar maxTAbs = Foam::max(gMax(magTNow.primitiveField()), 1e-12);
 if (objFunction == 2)
 {
     for (i=0; i<n; i++)
