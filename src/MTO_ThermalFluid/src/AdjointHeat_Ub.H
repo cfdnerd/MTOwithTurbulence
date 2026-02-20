@@ -121,7 +121,8 @@ if (useConsistentBranchUb)
     HbyAb -= (rAUb - rAtUb())*fvc::grad(pb);
 }
 MTOdiag::logScalarFieldHealth(runTime, opt, ubStage, "rAtUb", rAtUb().primitiveField());
-const scalar phiBaseAvg = Foam::max(gAverage(mag(phi).primitiveField()), 1e-12);
+const surfaceScalarField magPhiBase("magPhiBase", mag(phi));
+const scalar phiBaseAvg = Foam::max(gAverage(magPhiBase.primitiveField()), 1e-12);
 const scalar phiCapPhys = Foam::max(1e3*phiBaseAvg, 1e-8);
 const scalar phiCapHist = (prevPhiHbyAbMax > 0.0)
     ? Foam::max(5.0*prevPhiHbyAbMax, 1e-8)
