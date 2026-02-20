@@ -44,8 +44,9 @@ solvers
     }
     "(Ta|Tb)"
     {
-        solver          PBiCGStab;
-        preconditioner  DILU;
+        solver          smoothSolver;
+        smoother        GaussSeidel;
+        nSweeps         4;
         tolerance       1e-7;
         relTol          0.001;
     }

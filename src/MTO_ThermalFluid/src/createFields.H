@@ -49,6 +49,8 @@ scalar adjUaLocalCapCoeff(optProperties.lookupOrDefault<scalar>("adjUaLocalCapCo
 scalar adjUaRhsCapCoeff(optProperties.lookupOrDefault<scalar>("adjUaRhsCapCoeff", 200.0));
 scalar adjUaAllPassTbMax(optProperties.lookupOrDefault<scalar>("adjUaAllPassTbMax", 1e74));
 scalar adjUaHigherPassTbMax(optProperties.lookupOrDefault<scalar>("adjUaHigherPassTbMax", 1e60));
+scalar tbPreSolveReset(optProperties.lookupOrDefault<scalar>("tbPreSolveReset", 1e6));
+scalar tbHardCapMax(optProperties.lookupOrDefault<scalar>("tbHardCapMax", 1e6));
 label diagLevel(optProperties.lookupOrDefault<label>("diagLevel", 1));
 label diagEvery(optProperties.lookupOrDefault<label>("diagEvery", 5));
 label diagRank(optProperties.lookupOrDefault<label>("diagRank", -1));

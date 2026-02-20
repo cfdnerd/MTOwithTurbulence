@@ -2,6 +2,21 @@
 const word tbStage("AdjointHeat_Tb");
 MTOdiag::logMetric(runTime, opt, tbStage, "tb_phase_enter", 1.0);
 volScalarField TbSafe(Tb);
+// Reset Tb before solve if excessive (avoids ill-conditioned matrix and FPE in PBiCGStab)
+{
+    const volScalarField magTbIn("magTbIn", mag(Tb));
+    const scalar tbAbsMaxIn = gMax(magTbIn.primitiveField());
+    if (!std::isfinite(tbAbsMaxIn) || tbAbsMaxIn > tbPreSolveReset)
+    {
+        Tb = dimensionedScalar("zero", Tb.dimensions(), 0.0);
+        TbSafe = Tb;
+        if (std::isfinite(tbAbsMaxIn) && tbAbsMaxIn > tbPreSolveReset)
+        {
+            Info<< "AdjointHeat_Tb: reset Tb to zero (max|Tb|=" << tbAbsMaxIn << " > " << tbPreSolveReset << ")" << endl;
+        }
+        MTOdiag::logMetric(runTime, opt, tbStage, "tb_preSolve_reset", 1.0);
+    }
+}
 sumT = 0;
 const volScalarField magTNow("magTNow", mag(T));
 scalar maxTAbs = Foam::max(gMax(magTNow.primitiveField()), 1e-12);
@@ -68,7 +83,7 @@ if (!std::isfinite(tbInitRes) || !std::isfinite(tbFinalRes))
 }
 const volScalarField magTbSafe("magTbSafe", mag(TbSafe));
 const scalar tbSafeAvg = Foam::max(gAverage(magTbSafe.primitiveField()), 1e-8);
-const scalar tbHardCap = Foam::max(50.0*tbSafeAvg, 1e3);
+const scalar tbHardCap = Foam::min(Foam::max(10.0*tbSafeAvg, 1e3), tbHardCapMax);
 forAll(Tb, cellI)
 {
     scalar& tv = Tb[cellI];
