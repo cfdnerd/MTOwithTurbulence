@@ -9,8 +9,9 @@ surfaceScalarField phiaSafe(phia);
 for(i=0;i<maxAdjUaIter;i++)
 { 
   const word uaStage(word("UaLoop_") + Foam::name(i));
-  const scalar UavgStage = Foam::max(gAverage(mag(U).primitiveField()), 1e-8);
-  const scalar UmaxStage = Foam::max(gMax(mag(U).primitiveField()), UavgStage);
+  const volScalarField magUStage("magUStage", mag(U));
+  const scalar UavgStage = Foam::max(gAverage(magUStage.primitiveField()), 1e-8);
+  const scalar UmaxStage = Foam::max(gMax(magUStage.primitiveField()), UavgStage);
   const scalar UaHardCap = Foam::max(1e6*UmaxStage, 1e3);
   const scalar paHardCap = Foam::max(1e6*UmaxStage*UmaxStage, 1e5);
   volVectorField adjointTransposeConvectiona((fvc::grad(U) & Ua));
@@ -266,8 +267,10 @@ for(i=0;i<maxAdjUaIter;i++)
   }
   MTOdiag::logVectorFieldHealth(runTime, opt, uaStage, "Ua", Ua.primitiveField());
   MTOdiag::logScalarFieldHealth(runTime, opt, uaStage, "pa", pa.primitiveField());
-  const scalar UaMaxNow = gMax(mag(Ua).primitiveField());
-  const scalar paAbsMaxNow = gMax(mag(pa).primitiveField());
+  const volScalarField magUaNow("magUaNow", mag(Ua));
+  const volScalarField magPaNow("magPaNow", mag(pa));
+  const scalar UaMaxNow = gMax(magUaNow.primitiveField());
+  const scalar paAbsMaxNow = gMax(magPaNow.primitiveField());
   MTOdiag::logMetric(runTime, opt, uaStage, "Ua_hardCap", UaHardCap);
   MTOdiag::logMetric(runTime, opt, uaStage, "pa_hardCap", paHardCap);
   MTOdiag::logMetric(runTime, opt, uaStage, "Ua_absMax", UaMaxNow);
