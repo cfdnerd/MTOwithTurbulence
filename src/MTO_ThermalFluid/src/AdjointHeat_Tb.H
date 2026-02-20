@@ -1,8 +1,17 @@
 // Tb equation robustness: avoid unconditional p-norm normalization and guard solve state.
+const word tbStage("AdjointHeat_Tb");
+MTOdiag::logMetric(runTime, opt, tbStage, "tb_phase_enter", 1.0);
 volScalarField TbSafe(Tb);
 sumT = 0;
 const volScalarField magTNow("magTNow", mag(T));
-const scalar maxTAbs = Foam::max(gMax(magTNow.primitiveField()), 1e-12);
+scalar maxTAbs = Foam::max(gMax(magTNow.primitiveField()), 1e-12);
+if (!std::isfinite(maxTAbs))
+{
+    maxTAbs = 1e-12;
+    MTOdiag::logMetric(runTime, opt, tbStage, "tb_maxTAbs_reset", 1.0);
+}
+MTOdiag::logMetric(runTime, opt, tbStage, "tb_maxTAbs", maxTAbs);
+MTOdiag::logScalarFieldHealth(runTime, opt, tbStage, "T", T.primitiveField());
 if (objFunction == 2)
 {
     for (i=0; i<n; i++)
@@ -12,10 +21,19 @@ if (objFunction == 2)
     }
     reduce(sumT, sumOp<scalar>());
     sumT = std::pow(Foam::max(sumT, scalar(1e-30)), 1.0/Pnorm - 1.0);
+    if (!std::isfinite(sumT))
+    {
+        sumT = 0.0;
+        MTOdiag::logMetric(runTime, opt, tbStage, "tb_sumT_reset", 1.0);
+    }
 }
+MTOdiag::logMetric(runTime, opt, tbStage, "tb_sumT", sumT);
+MTOdiag::logMetric(runTime, opt, tbStage, "tb_phase_after_norm", 1.0);
 
 // alphaEff floored in Primal_T; use same field for consistency
 const dimensionedScalar adjPseudoTb("adjPseudoTb", dimless/dimTime, adjPseudoInvDtTb);
+MTOdiag::logScalarFieldHealth(runTime, opt, tbStage, "alphaEff", alphaEff.primitiveField());
+MTOdiag::logMetric(runTime, opt, tbStage, "tb_phase_pre_assembly", 1.0);
 fvScalarMatrix TEqnb
 (
    -fvm::div(-phi,Tb) 
@@ -35,12 +53,14 @@ if (objFunction==2)
    );
    TEqnb -= b2*sumT*Foam::pow(tNormSafe, Pnorm-1);
 }
+MTOdiag::logMetric(runTime, opt, tbStage, "tb_phase_pre_solve", 1.0);
 SolverPerformance<scalar> spTb = TEqnb.solve();
 logSolverStats(runTime, "AdjointHeat_Tb", 0, "Tb", spTb, opt, runTime.timeName());
 const scalar tbInitRes = spTb.initialResidual();
 const scalar tbFinalRes = spTb.finalResidual();
-MTOdiag::logMetric(runTime, opt, "AdjointHeat_Tb", "tb_initRes", tbInitRes);
-MTOdiag::logMetric(runTime, opt, "AdjointHeat_Tb", "tb_finalRes", tbFinalRes);
+MTOdiag::logMetric(runTime, opt, tbStage, "tb_initRes", tbInitRes);
+MTOdiag::logMetric(runTime, opt, tbStage, "tb_finalRes", tbFinalRes);
+MTOdiag::logMetric(runTime, opt, tbStage, "tb_phase_post_solve", 1.0);
 if (!std::isfinite(tbInitRes) || !std::isfinite(tbFinalRes))
 {
     Info<< "Warning: non-finite Tb residual; restoring last safe Tb state." << endl;
@@ -65,8 +85,10 @@ forAll(Tb, cellI)
         tv = -tbHardCap;
     }
 }
-MTOdiag::logScalarFieldHealth(runTime, opt, "AdjointHeat_Tb", "Tb", Tb.primitiveField());
+MTOdiag::logMetric(runTime, opt, tbStage, "tb_phase_post_clip", 1.0);
+MTOdiag::logScalarFieldHealth(runTime, opt, tbStage, "Tb", Tb.primitiveField());
 const volScalarField magTbNow("magTbNow", mag(Tb));
 const scalar tbAbsMax = gMax(magTbNow.primitiveField());
-MTOdiag::logMetric(runTime, opt, "AdjointHeat_Tb", "tb_hardCap", tbHardCap);
-MTOdiag::logMetric(runTime, opt, "AdjointHeat_Tb", "tb_absMax", tbAbsMax);
+MTOdiag::logMetric(runTime, opt, tbStage, "tb_hardCap", tbHardCap);
+MTOdiag::logMetric(runTime, opt, tbStage, "tb_absMax", tbAbsMax);
+MTOdiag::logMetric(runTime, opt, tbStage, "tb_phase_exit", 1.0);

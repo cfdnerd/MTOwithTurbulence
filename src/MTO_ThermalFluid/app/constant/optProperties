@@ -43,8 +43,8 @@ turbSensDamp        0;         // Sensitivity damping for turbulence source cont
 
 // ========================= Robust Adjoint Framework =================== //
 adjPseudoInvDtUa    50;        // Pseudo-transient inverse dt for Ua equation
-adjPseudoInvDtUb    25;        // Pseudo-transient inverse dt for Ub equation
-adjPseudoInvDtTb    10;        // Pseudo-transient inverse dt for Tb equation
+adjPseudoInvDtUb    40;        // Pseudo-transient inverse dt for Ub equation
+adjPseudoInvDtTb    80;        // Pseudo-transient inverse dt for Tb equation
 adjPseudoInvDtTurb  100;       // Pseudo-transient inverse dt for ka/omegaa equations
 
 adjTurbBetaMin      0.2;       // Initial turbulence-adjoint continuation factor
@@ -52,9 +52,9 @@ adjTurbRampStart    1;         // Iteration to start turbulence-adjoint beta ram
 adjTurbRampEnd      80;        // Iteration to finish turbulence-adjoint beta ramp
 adjTurbLagEvery     2;         // Solve turbulence adjoint every N opt iterations
 
-adjHeatBetaMin      0.2;       // Initial heat-adjoint continuation factor for Ub source
+adjHeatBetaMin      0.1;       // Initial heat-adjoint continuation factor for Ub source
 adjHeatRampStart    1;         // Iteration to start heat-adjoint beta ramp
-adjHeatRampEnd      120;       // Iteration to finish heat-adjoint beta ramp
+adjHeatRampEnd      220;       // Iteration to finish heat-adjoint beta ramp
 adjUaPassDecay      0.35;      // Extra Ua-source damping factor applied per adjoint pass (>0)
 adjUaPassMinGain    0.10;      // Minimum Ua-source gain floor for later adjoint passes
 adjUaLocalCapCoeff  200;       // Local Ua-source cap coefficient on U^2/L convective scale
