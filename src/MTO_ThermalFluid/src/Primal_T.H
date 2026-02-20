@@ -22,4 +22,10 @@ else
 }
 SolverPerformance<scalar> spT = TEqn.solve();
 logSolverStats(runTime, "Primal_T", 0, "T", spT, opt, runTime.timeName());
+// Singularity or non-finite residual: restore previous T to avoid propagating bad state to adjoints
+if (spT.singular() || !std::isfinite(spT.initialResidual()) || !std::isfinite(spT.finalResidual()))
+{
+    T = T2;
+    Info<< "Primal_T: singularity or non-finite residual; restored T from previous state." << endl;
+}
 

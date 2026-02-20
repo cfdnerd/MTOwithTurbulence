@@ -44,10 +44,10 @@ turbSensDamp        0;         // Sensitivity damping for turbulence source cont
 // ========================= Robust Adjoint Framework =================== //
 adjPseudoInvDtUa    50;        // Pseudo-transient inverse dt for Ua equation
 adjPseudoInvDtUb    40;        // Pseudo-transient inverse dt for Ub equation
-adjPseudoInvDtTb    2000;      // Pseudo-transient inverse dt for Tb equation (very strong diagonal dominance to avoid FPE)
-tbPreSolveReset     1e5;       // Reset Tb to zero before solve if max|Tb| exceeds this (avoids ill-conditioned matrix)
+adjPseudoInvDtTb    5000;      // Pseudo-transient inverse dt for Tb equation (very strong diagonal dominance to avoid FPE)
+tbPreSolveReset     1e4;       // Reset Tb to zero before solve if max|Tb| exceeds this (avoids ill-conditioned matrix)
 tbHardCapMax        1e6;       // Upper bound on Tb hard cap (keeps Tb from reaching O(1e10))
-tbRhsCapMax         1e12;      // Max |RHS source| per cell; scale down if exceeded (avoids FPE in PBiCGStab)
+tbRhsCapMax         1e10;      // Max |RHS source| per cell; scale down if exceeded (avoids FPE in iterative solvers)
 adjPseudoInvDtTurb  100;       // Pseudo-transient inverse dt for ka/omegaa equations
 
 adjTurbBetaMin      0.2;       // Initial turbulence-adjoint continuation factor
@@ -62,13 +62,13 @@ adjUaPassDecay      0.35;      // Extra Ua-source damping factor applied per adj
 adjUaPassMinGain    0.10;      // Minimum Ua-source gain floor for later adjoint passes
 adjUaLocalCapCoeff  200;       // Local Ua-source cap coefficient on U^2/L convective scale
 adjUaRhsCapCoeff    200;       // Global Ua RHS cap coefficient on U^2/L convective scale
-adjUaAllPassTbMax   1e74;      // Skip Ua update (any pass) if |Tb| exceeds this hard trust limit
-adjUaHigherPassTbMax 1e60;     // Skip higher-pass Ua update if |Tb| exceeds this trust threshold
+adjUaAllPassTbMax   1e6;       // Skip Ua update (any pass) if |Tb| exceeds this hard trust limit (decouple when Tb bad)
+adjUaHigherPassTbMax 1e5;      // Skip higher-pass Ua update if |Tb| exceeds this trust threshold
 
 // ========================= Runtime Diagnostics ======================== //
-diagLevel           0;         // 0: off, 1: metrics, 2: full field-health logs
+diagLevel           2;         // 0: off, 1: metrics, 2: full field-health logs
 diagEvery           1;         // Log diagnostics every N optimization iterations
 diagRank            -1;        // -1: all ranks, otherwise selected MPI rank only
-diagOptStart        140;       // First optimization iteration to begin diagnostics
+diagOptStart        1;         // First optimization iteration to begin diagnostics
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //  
