@@ -38,11 +38,47 @@ for(i=0;i<n;i++)
 
 Info<< "\n run MMA \n" << endl;
 mma.MMAsolver(xmma, dfdx, gx, dgdx);
-// Design-update under-relaxation when solid-heavy to avoid ill-conditioned designs
-scalar designRelax = (gMin(xh) < 0.15) ? 0.5 : 1.0;
+// Backtracked MMA update: accept only finite, bounded design states
+std::vector<double> xOld(n);
 for(i=0;i<n;i++)
 {
-   x[i] = x[i] + designRelax*(xmma[i] - x[i]);
+    xOld[i] = x[i];
+}
+scalar lambda = 1.0;
+bool accepted = false;
+for (label attempt = 0; attempt < 6; attempt++)
+{
+    bool finiteAndBounded = true;
+    for(i=0;i<n;i++)
+    {
+        const scalar xi = xOld[i] + lambda*(xmma[i] - xOld[i]);
+        if (!Foam::isfinite(xi) || xi < -1e-6 || xi > 1.0 + 1e-6)
+        {
+            finiteAndBounded = false;
+            break;
+        }
+    }
+
+    if (finiteAndBounded)
+    {
+        for(i=0;i<n;i++)
+        {
+            x[i] = Foam::min(Foam::max(xOld[i] + lambda*(xmma[i] - xOld[i]), scalar(0.0)), scalar(1.0));
+        }
+        accepted = true;
+        break;
+    }
+
+    lambda *= 0.5;
+}
+
+if (!accepted)
+{
+    Info<< "Warning: MMA trial update rejected after backtracking; keeping previous design." << endl;
+    for(i=0;i<n;i++)
+    {
+        x[i] = xOld[i];
+    }
 }
 
 #include "filter_x.H"

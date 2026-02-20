@@ -11,11 +11,29 @@ for(i=0;i<50;i++)
       const volScalarField& omega = mesh.thisDb().lookupObject<volScalarField>("omega");
       const volScalarField& nut = turbulence->nut();
       const dimensionedScalar gamma1("gamma1", dimless, 5.0/9.0);
-      const dimensionedScalar kSmall("kSmall", dimArea/dimTime/dimTime, 1e-10);
-      const dimensionedScalar omegaSmall("omegaSmall", dimless/dimTime, 1e-10);
+      const dimensionedScalar kSmall("kSmall", dimArea/dimTime/dimTime, 1e-6);
+      const dimensionedScalar omegaSmall("omegaSmall", dimless/dimTime, 1e-6);
       // Adjoint momentum source: scale to [0 1 -2]. ka-term: div/(k); omegaa-term: div/(omega)*nut
       turbSourceUa = -fvc::div(ka*2*nut*twoSymm(fvc::grad(U)))/(k + kSmall)
                      -nut*fvc::div(omegaa*2*gamma1*twoSymm(fvc::grad(U)))/(omega + omegaSmall);
+
+      // Clamp turbSourceUa to avoid local spikes that can destabilize Ua/pa solves
+      const scalar srcAvg = Foam::max(gAverage(mag(turbSourceUa.primitiveField())), 1e-12);
+      const scalar srcMaxAbs = 1e5*srcAvg;
+      forAll(turbSourceUa, cellI)
+      {
+          vector& sv = turbSourceUa[cellI];
+          if (!(Foam::isfinite(sv.x()) && Foam::isfinite(sv.y()) && Foam::isfinite(sv.z())))
+          {
+              sv = vector::zero;
+          }
+          else
+          {
+              sv.x() = Foam::min(Foam::max(sv.x(), -srcMaxAbs), srcMaxAbs);
+              sv.y() = Foam::min(Foam::max(sv.y(), -srcMaxAbs), srcMaxAbs);
+              sv.z() = Foam::min(Foam::max(sv.z(), -srcMaxAbs), srcMaxAbs);
+          }
+      }
   }
 
   tmp<fvVectorMatrix> tUaEqn
@@ -39,22 +57,71 @@ for(i=0;i<50;i++)
   fvOptions.correct(Ua);
 //****************************************
   volScalarField rAUa(1.0/UaEqn.A());
-  const scalar rAUaFloor = Foam::max(1e-5 * gAverage(rAUa), 1e-12);
-  rAUa = max(rAUa, dimensionedScalar("rAUaFloor", rAUa.dimensions(), rAUaFloor));
+  const scalar rAUaAvg = Foam::max(gAverage(rAUa.primitiveField()), 1e-12);
+  const scalar rAUaMin = 1e-6*rAUaAvg;
+  const scalar rAUaMax = 1e6*rAUaAvg;
+  forAll(rAUa, cellI)
+  {
+      scalar& rv = rAUa[cellI];
+      if (!Foam::isfinite(rv))
+      {
+          rv = rAUaMin;
+      }
+      else
+      {
+          rv = Foam::min(Foam::max(rv, rAUaMin), rAUaMax);
+      }
+  }
   volVectorField HbyAa("HbyAa", Ua);
   HbyAa = rAUa*UaEqn.H();
   surfaceScalarField phiHbyAa("phiHbyAa", fvc::flux(HbyAa));
   adjustPhi(phiHbyAa, Ua, pa);
   
   tmp<volScalarField> rAtUa(rAUa);
-  
-   if (simple.consistent())
+  bool useConsistentBranchUa = simple.consistent();
+  if (simple.consistent())
   {
       rAtUa = 1.0/(1.0/rAUa - UaEqn.H1());
-      rAtUa.ref() = max(rAtUa(), dimensionedScalar("rAtUaFloor", rAtUa().dimensions(), rAUaFloor));
-      phiHbyAa +=
-          fvc::interpolate(rAtUa() - rAUa)*fvc::snGrad(pa)*mesh.magSf();
+      label nBadRAtUa = 0;
+      volScalarField& rAtUaRef = rAtUa.ref();
+      forAll(rAtUaRef, cellI)
+      {
+          scalar& rv = rAtUaRef[cellI];
+          if (!Foam::isfinite(rv))
+          {
+              rv = rAUaMin;
+              nBadRAtUa++;
+          }
+          else
+          {
+              rv = Foam::min(Foam::max(rv, rAUaMin), rAUaMax);
+          }
+      }
+      if (nBadRAtUa > 0)
+      {
+          useConsistentBranchUa = false;
+          rAtUaRef = rAUa;
+      }
+  }
+  if (useConsistentBranchUa)
+  {
+      phiHbyAa += fvc::interpolate(rAtUa() - rAUa)*fvc::snGrad(pa)*mesh.magSf();
       HbyAa -= (rAUa - rAtUa())*fvc::grad(pa);
+  }
+
+  const scalar phiAaAvg = Foam::max(gAverage(mag(phiHbyAa)), 1e-12);
+  const scalar phiAaMaxAbs = 1e6*phiAaAvg;
+  forAll(phiHbyAa, faceI)
+  {
+      scalar& phiv = phiHbyAa[faceI];
+      if (!Foam::isfinite(phiv))
+      {
+          phiv = 0.0;
+      }
+      else
+      {
+          phiv = Foam::min(Foam::max(phiv, -phiAaMaxAbs), phiAaMaxAbs);
+      }
   }
   tUaEqn.clear();
 
@@ -87,8 +154,35 @@ for(i=0;i<50;i++)
   Ua = HbyAa - rAtUa()*fvc::grad(pa);
   Ua.correctBoundaryConditions();
   fvOptions.correct(Ua);
+
+  // Guard against non-finite adjoint fields before next sub-iteration
+  forAll(Ua, cellI)
+  {
+      vector& uv = Ua[cellI];
+      if (!(Foam::isfinite(uv.x()) && Foam::isfinite(uv.y()) && Foam::isfinite(uv.z())))
+      {
+          uv = vector::zero;
+      }
+  }
+  forAll(pa, cellI)
+  {
+      scalar& pv = pa[cellI];
+      if (!Foam::isfinite(pv))
+      {
+          pv = 0.0;
+      }
+  }
   
   Ua.storePrevIter();
   pa.storePrevIter();
   phia.storePrevIter();
+
+  if
+  (
+      i >= 2
+   && spUa.finalResidual() < 1e-4
+  )
+  {
+      break;
+  }
 }

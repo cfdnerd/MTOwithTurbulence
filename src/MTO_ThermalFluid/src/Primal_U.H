@@ -25,9 +25,22 @@ if (simple.momentumPredictor())
 }
 //****************************************//
 volScalarField rAU(1.0/UEqn.A());
-// Floor rAU to bound pressure matrix condition number (avoids FPE)
-const scalar rAUfloor = Foam::max(1e-5 * gAverage(rAU), 1e-12);
-rAU = max(rAU, dimensionedScalar("rAUfloor", rAU.dimensions(), rAUfloor));
+// Sanitize and bound rAU to keep pressure matrix scaling stable
+const scalar rAUavg = Foam::max(gAverage(rAU.primitiveField()), 1e-12);
+const scalar rAUmin = 1e-6*rAUavg;
+const scalar rAUmax = 1e6*rAUavg;
+forAll(rAU, cellI)
+{
+    scalar& rv = rAU[cellI];
+    if (!Foam::isfinite(rv))
+    {
+        rv = rAUmin;
+    }
+    else
+    {
+        rv = Foam::min(Foam::max(rv, rAUmin), rAUmax);
+    }
+}
 volVectorField HbyA(constrainHbyA(rAU*UEqn.H(), U, p));
 surfaceScalarField phiHbyA("phiHbyA", fvc::flux(HbyA));
 MRF.makeRelative(phiHbyA);
@@ -35,13 +48,51 @@ adjustPhi(phiHbyA, U, p);
 
 tmp<volScalarField> rAtU(rAU);
 
+bool useConsistentBranch = simple.consistent();
 if (simple.consistent())
 {
     rAtU = 1.0/(1.0/rAU - UEqn.H1());
-    rAtU.ref() = max(rAtU(), dimensionedScalar("rAtUfloor", rAtU().dimensions(), rAUfloor));
-    phiHbyA +=
-        fvc::interpolate(rAtU() - rAU)*fvc::snGrad(p)*mesh.magSf();
+    label nBadRAtU = 0;
+    volScalarField& rAtURef = rAtU.ref();
+    forAll(rAtURef, cellI)
+    {
+        scalar& rv = rAtURef[cellI];
+        if (!Foam::isfinite(rv))
+        {
+            rv = rAUmin;
+            nBadRAtU++;
+        }
+        else
+        {
+            rv = Foam::min(Foam::max(rv, rAUmin), rAUmax);
+        }
+    }
+    if (nBadRAtU > 0)
+    {
+        useConsistentBranch = false;
+        rAtURef = rAU;
+    }
+}
+if (useConsistentBranch)
+{
+    phiHbyA += fvc::interpolate(rAtU() - rAU)*fvc::snGrad(p)*mesh.magSf();
     HbyA -= (rAU - rAtU())*fvc::grad(p);
+}
+
+// Sanitize and clamp phiHbyA before pressure solve
+const scalar phiAvg = Foam::max(gAverage(mag(phiHbyA)), 1e-12);
+const scalar phiMaxAbs = 1e6*phiAvg;
+forAll(phiHbyA, faceI)
+{
+    scalar& phiv = phiHbyA[faceI];
+    if (!Foam::isfinite(phiv))
+    {
+        phiv = 0.0;
+    }
+    else
+    {
+        phiv = Foam::min(Foam::max(phiv, -phiMaxAbs), phiMaxAbs);
+    }
 }
 
 tUEqn.clear();
