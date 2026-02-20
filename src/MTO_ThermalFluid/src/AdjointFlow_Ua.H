@@ -1,12 +1,18 @@
 scalar prevPaInitRes = 1e300;
 label paDivergeCount = 0;
 const label maxAdjUaIter = 15;
+// Keep turbulence forcing growth bounded across inner iterations/opt steps.
+scalar prevTurbSourceUaMax = -1.0;
 volVectorField UaSafe(Ua);
 volScalarField paSafe(pa);
 surfaceScalarField phiaSafe(phia);
 for(i=0;i<maxAdjUaIter;i++)
 { 
   const word uaStage(word("UaLoop_") + Foam::name(i));
+  const scalar UavgStage = Foam::max(gAverage(mag(U).primitiveField()), 1e-8);
+  const scalar UmaxStage = Foam::max(gMax(mag(U).primitiveField()), UavgStage);
+  const scalar UaHardCap = Foam::max(1e6*UmaxStage, 1e3);
+  const scalar paHardCap = Foam::max(1e6*UmaxStage*UmaxStage, 1e5);
   volVectorField adjointTransposeConvectiona((fvc::grad(U) & Ua));
 
   volVectorField turbSourceUa(fvc::grad(pa) * scalar(0));  // zero by default
@@ -32,11 +38,18 @@ for(i=0;i<maxAdjUaIter;i++)
           -fvc::div(ka*2*nut*twoSymm(fvc::grad(U)))/kDenom
           -nut*fvc::div(omegaa*2*gamma1*twoSymm(fvc::grad(U)))/omegaDenom;
 
-      // Robust bound: keep turbulence source commensurate with pressure-gradient forcing
-      const volVectorField gradPa(fvc::grad(pa));
-      const volScalarField gradPaMag("gradPaMag", mag(gradPa));
-      const scalar gradPaAvg = Foam::max(gAverage(gradPaMag.primitiveField()), 1e-12);
-      const scalar srcMaxAbs = Foam::max(1e2*gradPaAvg, 1e-2);
+      // Robust bound independent of pa to avoid source-cap feedback blow-up:
+      // cap by physical convective scale U^2/L and by historical growth.
+      const scalar nCell = Foam::max(scalar(mesh.nCells()), scalar(1));
+      const scalar volTot = Foam::max(gSum(mesh.V()), scalar(1e-30));
+      const scalar hChar = Foam::pow(volTot/nCell, 1.0/3.0);
+      const scalar convScale = Foam::max(UmaxStage*UmaxStage/Foam::max(hChar, 1e-8), 1e-8);
+      const scalar srcCapPhys = Foam::max(1e3*convScale, 1e-2);
+      const scalar srcCapHist = (prevTurbSourceUaMax > 0.0)
+          ? Foam::max(5.0*prevTurbSourceUaMax, 1e-2)
+          : srcCapPhys;
+      const scalar srcMaxAbs = Foam::min(srcCapPhys, srcCapHist);
+      scalar srcUsedMax = 0.0;
       forAll(turbSourceUa, cellI)
       {
           vector& sv = turbSourceUa[cellI];
@@ -51,10 +64,15 @@ for(i=0;i<maxAdjUaIter;i++)
               {
                   sv *= (srcMaxAbs/(sm + VSMALL));
               }
+              srcUsedMax = Foam::max(srcUsedMax, mag(sv));
           }
       }
+      prevTurbSourceUaMax = srcUsedMax;
       MTOdiag::logVectorFieldHealth(runTime, opt, uaStage, "turbSourceUa", turbSourceUa.primitiveField());
-      MTOdiag::logMetric(runTime, opt, uaStage, "turbSourceUa_cap", srcMaxAbs);
+      MTOdiag::logMetric(runTime, opt, uaStage, "turbSourceUa_capPhys", srcCapPhys);
+      MTOdiag::logMetric(runTime, opt, uaStage, "turbSourceUa_capHist", srcCapHist);
+      MTOdiag::logMetric(runTime, opt, uaStage, "turbSourceUa_capUsed", srcMaxAbs);
+      MTOdiag::logMetric(runTime, opt, uaStage, "turbSourceUa_usedMax", srcUsedMax);
       MTOdiag::logMetric(runTime, opt, uaStage, "k_floor", kFloorVal);
       MTOdiag::logMetric(runTime, opt, uaStage, "omega_floor", omegaFloorVal);
   }
@@ -248,6 +266,20 @@ for(i=0;i<maxAdjUaIter;i++)
   }
   MTOdiag::logVectorFieldHealth(runTime, opt, uaStage, "Ua", Ua.primitiveField());
   MTOdiag::logScalarFieldHealth(runTime, opt, uaStage, "pa", pa.primitiveField());
+  const scalar UaMaxNow = gMax(mag(Ua).primitiveField());
+  const scalar paAbsMaxNow = gMax(mag(pa).primitiveField());
+  MTOdiag::logMetric(runTime, opt, uaStage, "Ua_hardCap", UaHardCap);
+  MTOdiag::logMetric(runTime, opt, uaStage, "pa_hardCap", paHardCap);
+  MTOdiag::logMetric(runTime, opt, uaStage, "Ua_absMax", UaMaxNow);
+  MTOdiag::logMetric(runTime, opt, uaStage, "pa_absMax", paAbsMaxNow);
+  if (!std::isfinite(UaMaxNow) || !std::isfinite(paAbsMaxNow) || UaMaxNow > UaHardCap || paAbsMaxNow > paHardCap)
+  {
+      Info<< "Warning: Ua/pa exceeded hard cap; restoring last safe Ua/pa state and exiting inner loop." << endl;
+      Ua = UaSafe;
+      pa = paSafe;
+      phia = phiaSafe;
+      break;
+  }
   
   Ua.storePrevIter();
   pa.storePrevIter();
