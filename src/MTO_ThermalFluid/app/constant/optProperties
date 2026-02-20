@@ -15,50 +15,51 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-raa0                1e-5;
-voluse              0.4;
-mma_init            0.3;
-mma_dec             0.7;
-mma_inc             1.2;
-movlim              0.3;
-filterR             2.5;
-PowerDiss0          1e-12;
-PowerDissMax        10;
-PowerDissRelax      25;
-GeoDim              2;
-fluid_area          yes;
-solid_area          no;
-test_area           yes;
-Pnorm               300;
-objFunction         1;
-// Adjoint turbulence coupling: 2 = two passes of ka,omegaa,Ua (iterative); 1 = single pass
-nAdjTurbPasses      2;
-// Turbulence sensitivity damping coeff (0=off; use if Rk/Romega have -c*alpha*k/omega in solid)
-turbSensDamp        0;
-// -------------------------------------------------------------------------
-// Robust adjoint framework controls
-// Pseudo-transient inverse time scales [1/s]-like diagonal shifts for robustness
-adjPseudoInvDtUa    50;
-adjPseudoInvDtUb    25;
-adjPseudoInvDtTb    10;
-adjPseudoInvDtTurb  100;
-// Turbulence-adjoint continuation beta: ramps from adjTurbBetaMin to 1
-adjTurbBetaMin      0.2;
-adjTurbRampStart    1;
-adjTurbRampEnd      80;
-// Lag turbulence-adjoint solves every N optimization iterations (frozen otherwise)
-adjTurbLagEvery     2;
-// Thermal-adjoint forcing continuation beta for Ub source b1*Tb*grad(T)
-adjHeatBetaMin      0.2;
-adjHeatRampStart    1;
-adjHeatRampEnd      120;
-// Diagnostics controls: 0=off, 1=light(metrics), 2=full(field health)
-diagLevel           2;
-// Log diagnostics every N optimization iterations
-diagEvery           1;
-// Diagnostics rank filter: -1 = all ranks, otherwise log only this MPI rank
-diagRank            -1;
-// Start diagnostics from this optimization iteration
-diagOptStart        120;
+// ========================= Optimization / MMA ========================= //
+raa0                1e-5;      // MMA regularization parameter
+voluse              0.4;       // Target initial/constraint volume fraction
+mma_init            0.3;       // MMA asymptote initialization factor
+mma_dec             0.7;       // MMA asymptote decrease factor
+mma_inc             1.2;       // MMA asymptote increase factor
+movlim              0.3;       // MMA move limit per optimization step
+filterR             2.5;       // Helmholtz/PDE filter radius (in cell-length units)
+
+// ========================= Objective / Constraint ===================== //
+PowerDiss0          1e-12;     // Reference dissipation for normalization
+PowerDissMax        10;        // Max allowed power dissipation constraint
+PowerDissRelax      25;        // Dissipation constraint relaxation window
+GeoDim              2;         // Geometric dimension flag
+Pnorm               300;       // p-norm exponent for max-temperature approximation
+objFunction         1;         // 1: mean temperature, 2: p-norm max temperature
+
+// ========================= Design Region Controls ===================== //
+fluid_area          yes;       // Keep fluid-designated zone fixed as fluid
+solid_area          no;        // Keep solid-designated zone fixed as solid
+test_area           yes;       // Enable test-zone initialization override
+
+// ========================= Adjoint Coupling =========================== //
+nAdjTurbPasses      2;         // Number of adjoint turbulence coupling passes per opt step
+turbSensDamp        0;         // Sensitivity damping for turbulence source contribution
+
+// ========================= Robust Adjoint Framework =================== //
+adjPseudoInvDtUa    50;        // Pseudo-transient inverse dt for Ua equation
+adjPseudoInvDtUb    25;        // Pseudo-transient inverse dt for Ub equation
+adjPseudoInvDtTb    10;        // Pseudo-transient inverse dt for Tb equation
+adjPseudoInvDtTurb  100;       // Pseudo-transient inverse dt for ka/omegaa equations
+
+adjTurbBetaMin      0.2;       // Initial turbulence-adjoint continuation factor
+adjTurbRampStart    1;         // Iteration to start turbulence-adjoint beta ramp
+adjTurbRampEnd      80;        // Iteration to finish turbulence-adjoint beta ramp
+adjTurbLagEvery     2;         // Solve turbulence adjoint every N opt iterations
+
+adjHeatBetaMin      0.2;       // Initial heat-adjoint continuation factor for Ub source
+adjHeatRampStart    1;         // Iteration to start heat-adjoint beta ramp
+adjHeatRampEnd      120;       // Iteration to finish heat-adjoint beta ramp
+
+// ========================= Runtime Diagnostics ======================== //
+diagLevel           2;         // 0: off, 1: metrics, 2: full field-health logs
+diagEvery           1;         // Log diagnostics every N optimization iterations
+diagRank            -1;        // -1: all ranks, otherwise selected MPI rank only
+diagOptStart        120;       // First optimization iteration to begin diagnostics
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //  
