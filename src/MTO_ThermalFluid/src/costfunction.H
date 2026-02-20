@@ -2,13 +2,18 @@ Info<<"cost function"<<endl;
 MeanT=fvc::domainIntegrate(T).value()/area;
 V=fvc::domainIntegrate(xh).value()/area-(voluse+0*Foam::max(0,0.5-opt*0.015));
 
-// Actual (raw) power dissipation before normalization
+// Actual (raw) power dissipation before normalization (includes turbulent kinetic energy flux for turbulent flow)
 scalar PowerDissActual = 0;
 for (i=0; i<nObjPatch; i++)
 {
     PowerDissActual = PowerDissActual - sum(
         phi.boundaryField()[conPatchList[i]]*(p.boundaryField()[conPatchList[i]]
         + 0.5*magSqr(U.boundaryField()[conPatchList[i]])));
+    if (mesh.thisDb().foundObject<volScalarField>("k"))
+    {
+        const volScalarField& k = mesh.thisDb().lookupObject<volScalarField>("k");
+        PowerDissActual -= sum(phi.boundaryField()[conPatchList[i]]*k.boundaryField()[conPatchList[i]]);
+    }
 }
 reduce(PowerDissActual, sumOp<scalar>());
 

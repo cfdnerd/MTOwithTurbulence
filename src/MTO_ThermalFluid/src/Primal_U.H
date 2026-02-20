@@ -6,7 +6,6 @@ tmp<fvVectorMatrix> tUEqn
     fvm::div(phi, U)
   + MRF.DDt(U)
   + turbulence->divDevReff(U)
-  //- fvm::laplacian(nu,U)
   + fvm::Sp(alpha, U)
  ==
     fvOptions(U)

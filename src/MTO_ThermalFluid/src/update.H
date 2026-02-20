@@ -32,13 +32,15 @@ if(opt>100)
   alphaMax=alphaMax*1.02;
 }
 alphaMax.value()=Foam::min(alphaMax.value(),alphaMAX.value());
-// Mesh-scaled cap: alpha ∝ nu/h^2 keeps pressure matrix condition number bounded (Brinkman lit.)
+// Mesh-scaled cap: alpha ∝ nuEff/h^2 keeps pressure matrix condition number bounded (Brinkman lit.)
+// Use nuEff (not nu) for turbulent flow consistency
 scalar alphaMaxMesh = 1e30;
 {
   scalar nCell = returnReduce(mesh.nCells(), sumOp<label>());
   scalar volTot = gSum(mesh.V());
   scalar hChar = Foam::pow(max(volTot/nCell, 1e-30), 1.0/3.0);
-  alphaMaxMesh = alphaMaxMeshFactor*nu.value()/max(hChar*hChar, 1e-30);
+  scalar nuEffVal = gAverage(nuEff.primitiveField());
+  alphaMaxMesh = alphaMaxMeshFactor*max(nuEffVal, nu.value())/max(hChar*hChar, 1e-30);
   alphaMax.value() = Foam::min(alphaMax.value(), alphaMaxMesh);
 }
 if(opt>=80)

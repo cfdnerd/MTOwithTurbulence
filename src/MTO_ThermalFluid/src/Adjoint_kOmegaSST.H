@@ -13,7 +13,6 @@
         const dimensionedScalar alphaOmega1("alphaOmega1", dimless, 0.5);
         const dimensionedScalar betaStar("betaStar", dimless, 0.09);
         const dimensionedScalar beta2("beta2", dimless, 0.0828);
-        const dimensionedScalar Prt("Prt", dimless, 0.85);
         const dimensionedScalar kSmall("kSmall", dimArea/dimTime/dimTime, 1e-10);
         const dimensionedScalar omegaSmall("omegaSmall", dimless/dimTime, 1e-10);
 
