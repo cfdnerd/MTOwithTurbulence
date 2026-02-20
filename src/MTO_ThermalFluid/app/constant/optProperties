@@ -35,5 +35,13 @@ objFunction         1;
 nAdjTurbPasses      2;
 // Turbulence sensitivity damping coeff (0=off; use if Rk/Romega have -c*alpha*k/omega in solid)
 turbSensDamp        0;
+// Diagnostics controls: 0=off, 1=light(metrics), 2=full(field health)
+diagLevel           1;
+// Log diagnostics every N optimization iterations
+diagEvery           5;
+// Diagnostics rank filter: -1 = all ranks, otherwise log only this MPI rank
+diagRank            -1;
+// Start diagnostics from this optimization iteration
+diagOptStart        120;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //  

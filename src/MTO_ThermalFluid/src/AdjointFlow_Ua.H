@@ -18,15 +18,24 @@ for(i=0;i<maxAdjUaIter;i++)
       const volScalarField& omega = mesh.thisDb().lookupObject<volScalarField>("omega");
       const volScalarField& nut = turbulence->nut();
       const dimensionedScalar gamma1("gamma1", dimless, 5.0/9.0);
-      const dimensionedScalar kSmall("kSmall", dimArea/dimTime/dimTime, 1e-6);
-      const dimensionedScalar omegaSmall("omegaSmall", dimless/dimTime, 1e-6);
+      // Adaptive denominator floors to avoid division-driven source blowup
+      const scalar kAvg = Foam::max(gAverage(k.primitiveField()), 1e-12);
+      const scalar omegaAvg = Foam::max(gAverage(omega.primitiveField()), 1e-12);
+      const scalar kFloorVal = Foam::max(1e-3*kAvg, 1e-8);
+      const scalar omegaFloorVal = Foam::max(1e-3*omegaAvg, 1e-8);
+      const dimensionedScalar kSmall("kSmall", dimArea/dimTime/dimTime, kFloorVal);
+      const dimensionedScalar omegaSmall("omegaSmall", dimless/dimTime, omegaFloorVal);
+      const volScalarField kDenom(max(k, kSmall));
+      const volScalarField omegaDenom(max(omega, omegaSmall));
       // Adjoint momentum source: scale to [0 1 -2]. ka-term: div/(k); omegaa-term: div/(omega)*nut
-      turbSourceUa = -fvc::div(ka*2*nut*twoSymm(fvc::grad(U)))/(k + kSmall)
-                     -nut*fvc::div(omegaa*2*gamma1*twoSymm(fvc::grad(U)))/(omega + omegaSmall);
+      turbSourceUa =
+          -fvc::div(ka*2*nut*twoSymm(fvc::grad(U)))/kDenom
+          -nut*fvc::div(omegaa*2*gamma1*twoSymm(fvc::grad(U)))/omegaDenom;
 
-      // Clamp turbSourceUa to avoid local spikes that can destabilize Ua/pa solves
-      const scalar srcAvg = Foam::max(gAverage(mag(turbSourceUa.primitiveField())), 1e-12);
-      const scalar srcMaxAbs = 1e5*srcAvg;
+      // Robust bound: keep turbulence source commensurate with pressure-gradient forcing
+      const volVectorField gradPa(fvc::grad(pa));
+      const scalar gradPaAvg = Foam::max(gAverage(mag(gradPa).primitiveField()), 1e-12);
+      const scalar srcMaxAbs = Foam::max(1e2*gradPaAvg, 1e-2);
       forAll(turbSourceUa, cellI)
       {
           vector& sv = turbSourceUa[cellI];
@@ -36,12 +45,17 @@ for(i=0;i<maxAdjUaIter;i++)
           }
           else
           {
-              sv.x() = Foam::min(Foam::max(sv.x(), -srcMaxAbs), srcMaxAbs);
-              sv.y() = Foam::min(Foam::max(sv.y(), -srcMaxAbs), srcMaxAbs);
-              sv.z() = Foam::min(Foam::max(sv.z(), -srcMaxAbs), srcMaxAbs);
+              const scalar sm = mag(sv);
+              if (sm > srcMaxAbs)
+              {
+                  sv *= (srcMaxAbs/(sm + VSMALL));
+              }
           }
       }
       MTOdiag::logVectorFieldHealth(runTime, opt, uaStage, "turbSourceUa", turbSourceUa.primitiveField());
+      MTOdiag::logMetric(runTime, opt, uaStage, "turbSourceUa_cap", srcMaxAbs);
+      MTOdiag::logMetric(runTime, opt, uaStage, "k_floor", kFloorVal);
+      MTOdiag::logMetric(runTime, opt, uaStage, "omega_floor", omegaFloorVal);
   }
 
   tmp<fvVectorMatrix> tUaEqn

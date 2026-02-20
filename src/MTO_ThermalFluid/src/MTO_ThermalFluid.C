@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
     #include "initContinuityErrs.H"
     #include "readThermalProperties.H" 
     #include "opt_initialization.H"
+    MTOdiag::setConfig(diagLevel, diagEvery, diagRank, diagOptStart);
     while (simple.loop(runTime))
     {
         #include "update.H"

@@ -11,6 +11,28 @@
 
 namespace MTOdiag
 {
+static label diagLevel = 2;       // 0=off, 1=light(metrics), 2=full(field health)
+static label diagEvery = 1;       // log every N optimization iterations
+static label diagRank = -1;       // -1=all ranks, otherwise specific rank only
+static label diagOptStart = 1;    // start logging from this optimization iteration
+
+inline void setConfig(const label level, const label every, const label rank, const label optStart)
+{
+    diagLevel = Foam::max(level, label(0));
+    diagEvery = Foam::max(every, label(1));
+    diagRank = rank;
+    diagOptStart = Foam::max(optStart, label(1));
+}
+
+inline bool shouldLog(const label optIter, const label requiredLevel)
+{
+    if (diagLevel < requiredLevel) return false;
+    if (optIter < diagOptStart) return false;
+    if ((optIter % diagEvery) != 0) return false;
+    if (diagRank >= 0 && Pstream::myProcNo() != diagRank) return false;
+    return true;
+}
+
 inline fileName diagLogPath(const Time& runTime)
 {
     return runTime.rootPath()/runTime.globalCaseName()
@@ -45,6 +67,7 @@ inline void writeHeaderIfNeeded(const Time& runTime)
 
 inline void logMetric(const Time& runTime, const label optIter, const word& stage, const word& metric, const scalar value)
 {
+    if (!shouldLog(optIter, 1)) return;
     writeHeaderIfNeeded(runTime);
     OFstream os = openDiag(runTime);
     if (!os.good()) return;
@@ -110,6 +133,7 @@ inline void vectorMagStats(const UList<vector>& f, label& nBad, scalar& minMag, 
 
 inline void logScalarFieldHealth(const Time& runTime, const label optIter, const word& stage, const word& name, const UList<scalar>& fld)
 {
+    if (!shouldLog(optIter, 2)) return;
     label nBad = 0;
     scalar minVal = 0.0, maxVal = 0.0;
     scalarStats(fld, nBad, minVal, maxVal);
@@ -120,6 +144,7 @@ inline void logScalarFieldHealth(const Time& runTime, const label optIter, const
 
 inline void logVectorFieldHealth(const Time& runTime, const label optIter, const word& stage, const word& name, const UList<vector>& fld)
 {
+    if (!shouldLog(optIter, 2)) return;
     label nBad = 0;
     scalar minMag = 0.0, maxMag = 0.0;
     vectorMagStats(fld, nBad, minMag, maxMag);

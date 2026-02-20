@@ -31,6 +31,10 @@ scalar Pnorm(readScalar(optProperties.lookup("Pnorm")));
 scalar objFunction(readScalar(optProperties.lookup("objFunction")));
 scalar nAdjTurbPasses(optProperties.lookupOrDefault<scalar>("nAdjTurbPasses", 1));
 scalar turbSensDamp(optProperties.lookupOrDefault<scalar>("turbSensDamp", 0));
+label diagLevel(optProperties.lookupOrDefault<label>("diagLevel", 1));
+label diagEvery(optProperties.lookupOrDefault<label>("diagEvery", 5));
+label diagRank(optProperties.lookupOrDefault<label>("diagRank", -1));
+label diagOptStart(optProperties.lookupOrDefault<label>("diagOptStart", 120));
 Info<< "Reading pseudo-density field\n" << endl;
 volScalarField xp
 (
