@@ -44,10 +44,10 @@ turbSensDamp        0;         // Sensitivity damping for turbulence source cont
 // ========================= Robust Adjoint Framework =================== //
 adjPseudoInvDtUa    50;        // Pseudo-transient inverse dt for Ua equation
 adjPseudoInvDtUb    40;        // Pseudo-transient inverse dt for Ub equation
-adjPseudoInvDtTb    5000;      // Pseudo-transient inverse dt for Tb equation (very strong diagonal dominance to avoid FPE)
-tbPreSolveReset     1e4;       // Reset Tb to zero before solve if max|Tb| exceeds this (avoids ill-conditioned matrix)
-tbHardCapMax        1e6;       // Upper bound on Tb hard cap (keeps Tb from reaching O(1e10))
-tbRhsCapMax         1e10;      // Max |RHS source| per cell; scale down if exceeded (avoids FPE in iterative solvers)
+adjPseudoInvDtTb    20000;     // Pseudo-transient inverse dt for Tb (strong diagonal dominance; higher = more stable)
+tbPreSolveReset     1e3;       // Reset Tb to zero before solve if max|Tb| exceeds this (avoids ill-conditioned matrix)
+tbHardCapMax        1e4;       // Upper bound on Tb hard cap (keeps Tb from exploding)
+tbRhsCapMax         1e6;       // Max |RHS source| per cell; scale down if exceeded (avoids FPE in iterative solvers)
 adjPseudoInvDtTurb  100;       // Pseudo-transient inverse dt for ka/omegaa equations
 
 adjTurbBetaMin      0.2;       // Initial turbulence-adjoint continuation factor

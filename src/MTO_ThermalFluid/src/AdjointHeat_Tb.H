@@ -79,14 +79,31 @@ if (objFunction==2)
     }
 }
 MTOdiag::logMetric(runTime, opt, tbStage, "tb_phase_pre_solve", 1.0);
-SolverPerformance<scalar> spTb = TEqnb.solve();
-logSolverStats(runTime, "AdjointHeat_Tb", 0, "Tb", spTb, opt, runTime.timeName());
-const scalar tbInitRes = spTb.initialResidual();
-const scalar tbFinalRes = spTb.finalResidual();
+const bool primalTSingular =
+(
+    spT.singular()
+ || !std::isfinite(spT.initialResidual())
+ || !std::isfinite(spT.finalResidual())
+ || spT.finalResidual() > 1.0
+);
+SolverPerformance<scalar> spTb;
+if (primalTSingular)
+{
+    Tb = TbSafe;
+    Info<< "AdjointHeat_Tb: skipping solve (primal T singular or bad residual); keeping previous Tb." << endl;
+    MTOdiag::logMetric(runTime, opt, tbStage, "tb_skip_primalT_bad", 1.0);
+}
+else
+{
+    spTb = TEqnb.solve();
+    logSolverStats(runTime, "AdjointHeat_Tb", 0, "Tb", spTb, opt, runTime.timeName());
+}
+const scalar tbInitRes = primalTSingular ? 0.0 : spTb.initialResidual();
+const scalar tbFinalRes = primalTSingular ? 0.0 : spTb.finalResidual();
 MTOdiag::logMetric(runTime, opt, tbStage, "tb_initRes", tbInitRes);
 MTOdiag::logMetric(runTime, opt, tbStage, "tb_finalRes", tbFinalRes);
 MTOdiag::logMetric(runTime, opt, tbStage, "tb_phase_post_solve", 1.0);
-if (!std::isfinite(tbInitRes) || !std::isfinite(tbFinalRes))
+if (!primalTSingular && (!std::isfinite(tbInitRes) || !std::isfinite(tbFinalRes)))
 {
     Info<< "Warning: non-finite Tb residual; restoring last safe Tb state." << endl;
     Tb = TbSafe;
