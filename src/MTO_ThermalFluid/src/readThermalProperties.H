@@ -18,7 +18,7 @@ dimensionedScalar kf(thermalProperties.lookup("kf"));//Thermal Conductivity of f
 dimensionedScalar ks(thermalProperties.lookup("ks"));//Thermal Conductivity of solid
 dimensionedScalar heatSource(thermalProperties.lookup("heatSource"));//Volumetric heat source [W/m3]
 dimensionedScalar Q(thermalProperties.lookup("Q"));
-dimensionedScalar Prt(thermalProperties.lookupOrDefault<dimensionedScalar>("Prt", dimensionedScalar("Prt", dimless, 0.85)));
+dimensionedScalar Prt("Prt", dimless, thermalProperties.lookupOrDefault<scalar>("Prt", 0.85));
 dimensionedScalar b2("b2", dimensionSet(0,0,-1,2-Pnorm,0,0,0),1);
 Switch DDHS(thermalProperties.lookup("DDHS"));//design dependent heat source
 // DT: molecular thermal diffusivity; overwritten each iteration in update.H
