@@ -32,7 +32,7 @@ const scalar rAUmax = 1e6*rAUavg;
 forAll(rAU, cellI)
 {
     scalar& rv = rAU[cellI];
-    if (!Foam::isfinite(rv))
+    if (!std::isfinite(rv))
     {
         rv = rAUmin;
     }
@@ -57,7 +57,7 @@ if (simple.consistent())
     forAll(rAtURef, cellI)
     {
         scalar& rv = rAtURef[cellI];
-        if (!Foam::isfinite(rv))
+        if (!std::isfinite(rv))
         {
             rv = rAUmin;
             nBadRAtU++;
@@ -80,12 +80,12 @@ if (useConsistentBranch)
 }
 
 // Sanitize and clamp phiHbyA before pressure solve
-const scalar phiAvg = Foam::max(gAverage(mag(phiHbyA)), 1e-12);
+const scalar phiAvg = Foam::max(gAverage(mag(phiHbyA.primitiveField())), 1e-12);
 const scalar phiMaxAbs = 1e6*phiAvg;
 forAll(phiHbyA, faceI)
 {
     scalar& phiv = phiHbyA[faceI];
-    if (!Foam::isfinite(phiv))
+    if (!std::isfinite(phiv))
     {
         phiv = 0.0;
     }

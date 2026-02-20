@@ -9,6 +9,7 @@ static char help[] = "topology optimization of fluid problem\n";
 #include "simpleControl.H"
 #include "fvOptions.H"//
 #include "MMA/MMA.h"
+#include <cmath>
 #include <diff.c>
 #include "solver_status.H"
 

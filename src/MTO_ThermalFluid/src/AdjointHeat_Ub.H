@@ -30,7 +30,7 @@ const scalar rAUbMax = 1e6*rAUbAvg;
 forAll(rAUb, cellI)
 {
     scalar& rv = rAUb[cellI];
-    if (!Foam::isfinite(rv))
+    if (!std::isfinite(rv))
     {
         rv = rAUbMin;
     }
@@ -55,7 +55,7 @@ if (simple.consistent())
     forAll(rAtUbRef, cellI)
     {
         scalar& rv = rAtUbRef[cellI];
-        if (!Foam::isfinite(rv))
+        if (!std::isfinite(rv))
         {
             rv = rAUbMin;
             nBadRAtUb++;
@@ -76,12 +76,12 @@ if (useConsistentBranchUb)
     phiHbyAb += fvc::interpolate(rAtUb() - rAUb)*fvc::snGrad(pb)*mesh.magSf();
     HbyAb -= (rAUb - rAtUb())*fvc::grad(pb);
 }
-const scalar phiAbAvg = Foam::max(gAverage(mag(phiHbyAb)), 1e-12);
+const scalar phiAbAvg = Foam::max(gAverage(mag(phiHbyAb.primitiveField())), 1e-12);
 const scalar phiAbMaxAbs = 1e6*phiAbAvg;
 forAll(phiHbyAb, faceI)
 {
     scalar& phiv = phiHbyAb[faceI];
-    if (!Foam::isfinite(phiv))
+    if (!std::isfinite(phiv))
     {
         phiv = 0.0;
     }
@@ -116,7 +116,7 @@ while (simple.correctNonOrthogonal())
 forAll(Ub, cellI)
 {
     vector& uv = Ub[cellI];
-    if (!(Foam::isfinite(uv.x()) && Foam::isfinite(uv.y()) && Foam::isfinite(uv.z())))
+    if (!(std::isfinite(uv.x()) && std::isfinite(uv.y()) && std::isfinite(uv.z())))
     {
         uv = vector::zero;
     }
@@ -124,7 +124,7 @@ forAll(Ub, cellI)
 forAll(pb, cellI)
 {
     scalar& pv = pb[cellI];
-    if (!Foam::isfinite(pv))
+    if (!std::isfinite(pv))
     {
         pv = 0.0;
     }
@@ -144,12 +144,5 @@ Ub.storePrevIter();
 pb.storePrevIter();
 phib.storePrevIter();
 
-if
-(
-    i >= 2
- && spUb.finalResidual() < 1e-4
-)
-{
-    break;
-}
+// keep fixed upper bound iterations here (convergence checks are handled by solver residual controls)
 }

@@ -23,7 +23,7 @@ for(i=0;i<50;i++)
       forAll(turbSourceUa, cellI)
       {
           vector& sv = turbSourceUa[cellI];
-          if (!(Foam::isfinite(sv.x()) && Foam::isfinite(sv.y()) && Foam::isfinite(sv.z())))
+          if (!(std::isfinite(sv.x()) && std::isfinite(sv.y()) && std::isfinite(sv.z())))
           {
               sv = vector::zero;
           }
@@ -63,7 +63,7 @@ for(i=0;i<50;i++)
   forAll(rAUa, cellI)
   {
       scalar& rv = rAUa[cellI];
-      if (!Foam::isfinite(rv))
+      if (!std::isfinite(rv))
       {
           rv = rAUaMin;
       }
@@ -87,7 +87,7 @@ for(i=0;i<50;i++)
       forAll(rAtUaRef, cellI)
       {
           scalar& rv = rAtUaRef[cellI];
-          if (!Foam::isfinite(rv))
+          if (!std::isfinite(rv))
           {
               rv = rAUaMin;
               nBadRAtUa++;
@@ -109,12 +109,12 @@ for(i=0;i<50;i++)
       HbyAa -= (rAUa - rAtUa())*fvc::grad(pa);
   }
 
-  const scalar phiAaAvg = Foam::max(gAverage(mag(phiHbyAa)), 1e-12);
+  const scalar phiAaAvg = Foam::max(gAverage(mag(phiHbyAa.primitiveField())), 1e-12);
   const scalar phiAaMaxAbs = 1e6*phiAaAvg;
   forAll(phiHbyAa, faceI)
   {
       scalar& phiv = phiHbyAa[faceI];
-      if (!Foam::isfinite(phiv))
+      if (!std::isfinite(phiv))
       {
           phiv = 0.0;
       }
@@ -159,7 +159,7 @@ for(i=0;i<50;i++)
   forAll(Ua, cellI)
   {
       vector& uv = Ua[cellI];
-      if (!(Foam::isfinite(uv.x()) && Foam::isfinite(uv.y()) && Foam::isfinite(uv.z())))
+      if (!(std::isfinite(uv.x()) && std::isfinite(uv.y()) && std::isfinite(uv.z())))
       {
           uv = vector::zero;
       }
@@ -167,7 +167,7 @@ for(i=0;i<50;i++)
   forAll(pa, cellI)
   {
       scalar& pv = pa[cellI];
-      if (!Foam::isfinite(pv))
+      if (!std::isfinite(pv))
       {
           pv = 0.0;
       }
@@ -177,12 +177,5 @@ for(i=0;i<50;i++)
   pa.storePrevIter();
   phia.storePrevIter();
 
-  if
-  (
-      i >= 2
-   && spUa.finalResidual() < 1e-4
-  )
-  {
-      break;
-  }
+  // keep fixed upper bound iterations here (convergence checks are handled by solver residual controls)
 }

@@ -52,7 +52,7 @@ for (label attempt = 0; attempt < 6; attempt++)
     for(i=0;i<n;i++)
     {
         const scalar xi = xOld[i] + lambda*(xmma[i] - xOld[i]);
-        if (!Foam::isfinite(xi) || xi < -1e-6 || xi > 1.0 + 1e-6)
+        if (!std::isfinite(xi) || xi < -1e-6 || xi > 1.0 + 1e-6)
         {
             finiteAndBounded = false;
             break;
