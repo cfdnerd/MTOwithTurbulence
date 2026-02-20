@@ -68,6 +68,16 @@ if (objFunction==2)
    );
    TEqnb -= b2*sumT*Foam::pow(tNormSafe, Pnorm-1);
 }
+// Cap RHS source to avoid FPE in PBiCGStab from extreme residual values
+{
+    scalarField& src = TEqnb.source();
+    const scalar srcMax = gMax(mag(src));
+    if (std::isfinite(srcMax) && srcMax > tbRhsCapMax && srcMax > 1e-30)
+    {
+        src *= tbRhsCapMax / srcMax;
+        MTOdiag::logMetric(runTime, opt, tbStage, "tb_rhs_capped", 1.0);
+    }
+}
 MTOdiag::logMetric(runTime, opt, tbStage, "tb_phase_pre_solve", 1.0);
 SolverPerformance<scalar> spTb = TEqnb.solve();
 logSolverStats(runTime, "AdjointHeat_Tb", 0, "Tb", spTb, opt, runTime.timeName());
