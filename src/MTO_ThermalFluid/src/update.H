@@ -58,3 +58,11 @@ scalar alphaCapVal = (xhMinVal < 0.15) ? Foam::min(scalar(3e3), alphaMaxMesh) : 
 alpha=Foam::min(alphaRaw, dimensionedScalar("alphaCap", alphaRaw.dimensions(), alphaCapVal));
 // Use xhSafe in DT to limit thermal diffusivity range and improve matrix conditioning
 DT=(ks+(kf-ks)*xhSafe*(1+qu)/(qu+xhSafe))/rhoc;
+
+// Diagnostics checkpoint: track coefficient health right after update
+MTOdiag::logScalarFieldHealth(runTime, opt, "update", "xh", xh.primitiveField());
+MTOdiag::logScalarFieldHealth(runTime, opt, "update", "alpha", alpha.primitiveField());
+MTOdiag::logScalarFieldHealth(runTime, opt, "update", "DT", DT.primitiveField());
+MTOdiag::logMetric(runTime, opt, "update", "alphaMax_value", alphaMax.value());
+MTOdiag::logMetric(runTime, opt, "update", "alphaCap", alphaCapVal);
+MTOdiag::logMetric(runTime, opt, "update", "xhFloor", xhFloorVal);

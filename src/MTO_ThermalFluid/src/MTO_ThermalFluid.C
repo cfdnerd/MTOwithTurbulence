@@ -12,6 +12,7 @@ static char help[] = "topology optimization of fluid problem\n";
 #include <cmath>
 #include <diff.c>
 #include "solver_status.H"
+#include "solver_diagnostics.H"
 
 int main(int argc, char *argv[])
 {

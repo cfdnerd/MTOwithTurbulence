@@ -6,6 +6,7 @@ volScalarField pbSafe(pb);
 surfaceScalarField phibSafe(phib);
 for(i=0;i<maxAdjUbIter;i++)
 {    
+const word ubStage(word("UbLoop_") + Foam::name(i));
 volVectorField adjointTransposeConvectionb((fvc::grad(U) & Ub));
 
 tmp<fvVectorMatrix> tUbEqn
@@ -45,6 +46,7 @@ forAll(rAUb, cellI)
         rv = Foam::min(Foam::max(rv, rAUbMin), rAUbMax);
     }
 }
+MTOdiag::logScalarFieldHealth(runTime, opt, ubStage, "rAUb", rAUb.primitiveField());
 volVectorField HbyAb("HbyAb", Ub);
 HbyAb = rAUb*UbEqn.H();
 surfaceScalarField phiHbyAb("phiHbyAb", fvc::flux(HbyAb));
@@ -82,6 +84,7 @@ if (useConsistentBranchUb)
     phiHbyAb += fvc::interpolate(rAtUb() - rAUb)*fvc::snGrad(pb)*mesh.magSf();
     HbyAb -= (rAUb - rAtUb())*fvc::grad(pb);
 }
+MTOdiag::logScalarFieldHealth(runTime, opt, ubStage, "rAtUb", rAtUb().primitiveField());
 const scalar phiAbAvg = Foam::max(gAverage(mag(phiHbyAb.primitiveField())), 1e-12);
 const scalar phiAbMaxAbs = 1e6*phiAbAvg;
 forAll(phiHbyAb, faceI)
@@ -96,6 +99,7 @@ forAll(phiHbyAb, faceI)
         phiv = Foam::min(Foam::max(phiv, -phiAbMaxAbs), phiAbMaxAbs);
     }
 }
+MTOdiag::logScalarFieldHealth(runTime, opt, ubStage, "phiHbyAb", phiHbyAb.primitiveField());
 tUbEqn.clear();
 
 // Update the pressure BCs to ensure flux consistency
@@ -127,6 +131,8 @@ while (simple.correctNonOrthogonal())
         badPbResidual = true;
         break;
     }
+    MTOdiag::logMetric(runTime, opt, ubStage, "pb_initRes", pbInitRes);
+    MTOdiag::logMetric(runTime, opt, ubStage, "pb_finalRes", pbLastFinalRes);
 
     if (simple.finalNonOrthogonalIter())
     {
@@ -152,6 +158,8 @@ else
     pbDivergeCount = 0;
 }
 prevPbInitRes = pbFirstInitRes;
+MTOdiag::logMetric(runTime, opt, ubStage, "pb_firstInitRes", pbFirstInitRes);
+MTOdiag::logMetric(runTime, opt, ubStage, "pb_driftCount", scalar(pbDivergeCount));
 if (pbDivergeCount >= 2)
 {
     Info<< "Warning: pb first-pass residual drifting up; restoring last safe Ub/pb state and exiting inner loop." << endl;
@@ -178,6 +186,8 @@ forAll(pb, cellI)
         pv = 0.0;
     }
 }
+MTOdiag::logVectorFieldHealth(runTime, opt, ubStage, "Ub", Ub.primitiveField());
+MTOdiag::logScalarFieldHealth(runTime, opt, ubStage, "pb", pb.primitiveField());
 
 //#include "adjointContinuityErrs.H"
 

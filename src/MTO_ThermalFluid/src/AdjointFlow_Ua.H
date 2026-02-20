@@ -6,6 +6,7 @@ volScalarField paSafe(pa);
 surfaceScalarField phiaSafe(phia);
 for(i=0;i<maxAdjUaIter;i++)
 { 
+  const word uaStage(word("UaLoop_") + Foam::name(i));
   volVectorField adjointTransposeConvectiona((fvc::grad(U) & Ua));
 
   volVectorField turbSourceUa(fvc::grad(pa) * scalar(0));  // zero by default
@@ -40,6 +41,7 @@ for(i=0;i<maxAdjUaIter;i++)
               sv.z() = Foam::min(Foam::max(sv.z(), -srcMaxAbs), srcMaxAbs);
           }
       }
+      MTOdiag::logVectorFieldHealth(runTime, opt, uaStage, "turbSourceUa", turbSourceUa.primitiveField());
   }
 
   tmp<fvVectorMatrix> tUaEqn
@@ -78,6 +80,7 @@ for(i=0;i<maxAdjUaIter;i++)
           rv = Foam::min(Foam::max(rv, rAUaMin), rAUaMax);
       }
   }
+  MTOdiag::logScalarFieldHealth(runTime, opt, uaStage, "rAUa", rAUa.primitiveField());
   volVectorField HbyAa("HbyAa", Ua);
   HbyAa = rAUa*UaEqn.H();
   surfaceScalarField phiHbyAa("phiHbyAa", fvc::flux(HbyAa));
@@ -114,6 +117,7 @@ for(i=0;i<maxAdjUaIter;i++)
       phiHbyAa += fvc::interpolate(rAtUa() - rAUa)*fvc::snGrad(pa)*mesh.magSf();
       HbyAa -= (rAUa - rAtUa())*fvc::grad(pa);
   }
+  MTOdiag::logScalarFieldHealth(runTime, opt, uaStage, "rAtUa", rAtUa().primitiveField());
 
   const scalar phiAaAvg = Foam::max(gAverage(mag(phiHbyAa.primitiveField())), 1e-12);
   const scalar phiAaMaxAbs = 1e6*phiAaAvg;
@@ -129,6 +133,7 @@ for(i=0;i<maxAdjUaIter;i++)
           phiv = Foam::min(Foam::max(phiv, -phiAaMaxAbs), phiAaMaxAbs);
       }
   }
+  MTOdiag::logScalarFieldHealth(runTime, opt, uaStage, "phiHbyAa", phiHbyAa.primitiveField());
   tUaEqn.clear();
 
   // Update the pressure BCs to ensure flux consistency
@@ -161,6 +166,8 @@ for(i=0;i<maxAdjUaIter;i++)
           badPaResidual = true;
           break;
       }
+      MTOdiag::logMetric(runTime, opt, uaStage, "pa_initRes", paInitRes);
+      MTOdiag::logMetric(runTime, opt, uaStage, "pa_finalRes", paLastFinalRes);
 
       if (simple.finalNonOrthogonalIter())
       {
@@ -186,6 +193,8 @@ for(i=0;i<maxAdjUaIter;i++)
       paDivergeCount = 0;
   }
   prevPaInitRes = paFirstInitRes;
+  MTOdiag::logMetric(runTime, opt, uaStage, "pa_firstInitRes", paFirstInitRes);
+  MTOdiag::logMetric(runTime, opt, uaStage, "pa_driftCount", scalar(paDivergeCount));
   if (paDivergeCount >= 2)
   {
       Info<< "Warning: pa first-pass residual drifting up; restoring last safe Ua/pa state and exiting inner loop." << endl;
@@ -222,6 +231,8 @@ for(i=0;i<maxAdjUaIter;i++)
           pv = 0.0;
       }
   }
+  MTOdiag::logVectorFieldHealth(runTime, opt, uaStage, "Ua", Ua.primitiveField());
+  MTOdiag::logScalarFieldHealth(runTime, opt, uaStage, "pa", pa.primitiveField());
   
   Ua.storePrevIter();
   pa.storePrevIter();
