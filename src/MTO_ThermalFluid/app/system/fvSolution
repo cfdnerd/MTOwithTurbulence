@@ -44,12 +44,11 @@ solvers
     }
     "(Ta|Tb)"
     {
-        solver          smoothSolver;
-        smoother        GaussSeidel;
-        nSweeps         8;
-        tolerance       1e-6;
-        relTol          0.01;
-        maxIter         2000;
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-5;
+        relTol          0.05;
+        maxIter         1500;
     }
      "(xp|fsensMeanT|gsensVol|gsensPowerDiss)"
     {
