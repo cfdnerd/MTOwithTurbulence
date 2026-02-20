@@ -66,9 +66,9 @@ adjUaAllPassTbMax   1e6;       // Skip Ua update (any pass) if |Tb| exceeds this
 adjUaHigherPassTbMax 1e5;      // Skip higher-pass Ua update if |Tb| exceeds this trust threshold
 
 // ========================= Runtime Diagnostics ======================== //
-diagLevel           2;         // 0: off, 1: metrics, 2: full field-health logs
+diagLevel           0;         // 0: off, 1: metrics, 2: full field-health logs
 diagEvery           1;         // Log diagnostics every N optimization iterations
 diagRank            -1;        // -1: all ranks, otherwise selected MPI rank only
-diagOptStart        1;         // First optimization iteration to begin diagnostics
+diagOptStart        120;         // First optimization iteration to begin diagnostics
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //  
