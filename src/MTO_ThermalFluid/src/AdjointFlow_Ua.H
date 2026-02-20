@@ -1,3 +1,8 @@
+scalar prevPaInitRes = 1e300;
+label paDivergeCount = 0;
+volVectorField UaSafe(Ua);
+volScalarField paSafe(pa);
+surfaceScalarField phiaSafe(phia);
 for(i=0;i<50;i++)
 { 
   volVectorField adjointTransposeConvectiona((fvc::grad(U) & Ua));
@@ -139,6 +144,45 @@ for(i=0;i<50;i++)
       SolverPerformance<scalar> sppa = paEqn.solve();
       logSolverStats(runTime, "AdjointFlow_Ua", i, "pa", sppa, opt, runTime.timeName());
 
+      const scalar paInitRes = sppa.initialResidual();
+      const scalar paFinalRes = sppa.finalResidual();
+      if (!std::isfinite(paInitRes) || !std::isfinite(paFinalRes))
+      {
+          Info<< "Warning: non-finite pa residual detected; restoring last safe Ua/pa state." << endl;
+          Ua = UaSafe;
+          pa = paSafe;
+          phia = phiaSafe;
+          break;
+      }
+      if (i > 0 && paInitRes > 1.25*prevPaInitRes)
+      {
+          paDivergeCount++;
+      }
+      else
+      {
+          paDivergeCount = 0;
+      }
+      prevPaInitRes = paInitRes;
+      if (paDivergeCount >= 3)
+      {
+          Info<< "Warning: pa residual diverging; restoring last safe Ua/pa state and exiting inner loop." << endl;
+          Ua = UaSafe;
+          pa = paSafe;
+          phia = phiaSafe;
+          break;
+      }
+      if (paFinalRes < 1e-5 && i >= 2)
+      {
+          if (simple.finalNonOrthogonalIter())
+          {
+              phia = phiHbyAa - paEqn.flux();
+          }
+          UaSafe = Ua;
+          paSafe = pa;
+          phiaSafe = phia;
+          break;
+      }
+
       if (simple.finalNonOrthogonalIter())
       {
           phia = phiHbyAa - paEqn.flux();
@@ -176,6 +220,7 @@ for(i=0;i<50;i++)
   Ua.storePrevIter();
   pa.storePrevIter();
   phia.storePrevIter();
-
-  // keep fixed upper bound iterations here (convergence checks are handled by solver residual controls)
+  UaSafe = Ua;
+  paSafe = pa;
+  phiaSafe = phia;
 }

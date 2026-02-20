@@ -1,3 +1,8 @@
+scalar prevPbInitRes = 1e300;
+label pbDivergeCount = 0;
+volVectorField UbSafe(Ub);
+volScalarField pbSafe(pb);
+surfaceScalarField phibSafe(phib);
 for(i=0;i<50;i++)
 {    
 volVectorField adjointTransposeConvectionb((fvc::grad(U) & Ub));
@@ -106,6 +111,46 @@ while (simple.correctNonOrthogonal())
     SolverPerformance<scalar> sppb = pbEqn.solve();
     logSolverStats(runTime, "AdjointHeat_Ub", i, "pb", sppb, opt, runTime.timeName());
 
+    const scalar pbInitRes = sppb.initialResidual();
+    const scalar pbFinalRes = sppb.finalResidual();
+    if (!std::isfinite(pbInitRes) || !std::isfinite(pbFinalRes))
+    {
+        Info<< "Warning: non-finite pb residual detected; restoring last safe Ub/pb state." << endl;
+        Ub = UbSafe;
+        pb = pbSafe;
+        phib = phibSafe;
+        break;
+    }
+    if (i > 0 && pbInitRes > 1.25*prevPbInitRes)
+    {
+        pbDivergeCount++;
+    }
+    else
+    {
+        pbDivergeCount = 0;
+    }
+    prevPbInitRes = pbInitRes;
+    if (pbDivergeCount >= 3)
+    {
+        Info<< "Warning: pb residual diverging; restoring last safe Ub/pb state and exiting inner loop." << endl;
+        Ub = UbSafe;
+        pb = pbSafe;
+        phib = phibSafe;
+        break;
+    }
+    if (pbFinalRes < 1e-5 && i >= 2)
+    {
+        // Converged enough for this outer optimization iteration
+        if (simple.finalNonOrthogonalIter())
+        {
+            phib = phiHbyAb - pbEqn.flux();
+        }
+        UbSafe = Ub;
+        pbSafe = pb;
+        phibSafe = phib;
+        break;
+    }
+
     if (simple.finalNonOrthogonalIter())
     {
         phib = phiHbyAb - pbEqn.flux();
@@ -143,6 +188,7 @@ fvOptions.correct(Ub);
 Ub.storePrevIter();
 pb.storePrevIter();
 phib.storePrevIter();
-
-// keep fixed upper bound iterations here (convergence checks are handled by solver residual controls)
+UbSafe = Ub;
+pbSafe = pb;
+phibSafe = phib;
 }
