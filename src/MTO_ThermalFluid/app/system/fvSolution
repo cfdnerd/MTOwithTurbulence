@@ -45,7 +45,7 @@ solvers
     "(Ta|Tb)"
     {
         solver          GAMG;
-        smoother        DICGaussSeidel;
+        smoother        GaussSeidel;
         tolerance       1e-7;
         relTol          0.001;
         maxIter         2000;
