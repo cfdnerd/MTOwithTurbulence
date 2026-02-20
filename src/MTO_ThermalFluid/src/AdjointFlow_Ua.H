@@ -1,9 +1,10 @@
 scalar prevPaInitRes = 1e300;
 label paDivergeCount = 0;
+const label maxAdjUaIter = 15;
 volVectorField UaSafe(Ua);
 volScalarField paSafe(pa);
 surfaceScalarField phiaSafe(phia);
-for(i=0;i<50;i++)
+for(i=0;i<maxAdjUaIter;i++)
 { 
   volVectorField adjointTransposeConvectiona((fvc::grad(U) & Ua));
 
@@ -133,6 +134,10 @@ for(i=0;i<50;i++)
   // Update the pressure BCs to ensure flux consistency
   constrainPressure(pa, Ua, phiHbyAa, rAtUa(), MRF);           
   // Non-orthogonal pressure corrector loop
+  bool badPaResidual = false;
+  scalar paFirstInitRes = 1e300;
+  scalar paLastFinalRes = 1e300;
+  label nonOrthSolveI = 0;
   while (simple.correctNonOrthogonal())
   {
       fvScalarMatrix paEqn
@@ -145,41 +150,15 @@ for(i=0;i<50;i++)
       logSolverStats(runTime, "AdjointFlow_Ua", i, "pa", sppa, opt, runTime.timeName());
 
       const scalar paInitRes = sppa.initialResidual();
-      const scalar paFinalRes = sppa.finalResidual();
-      if (!std::isfinite(paInitRes) || !std::isfinite(paFinalRes))
+      paLastFinalRes = sppa.finalResidual();
+      if (nonOrthSolveI == 0)
       {
-          Info<< "Warning: non-finite pa residual detected; restoring last safe Ua/pa state." << endl;
-          Ua = UaSafe;
-          pa = paSafe;
-          phia = phiaSafe;
-          break;
+          paFirstInitRes = paInitRes;
       }
-      if (i > 0 && paInitRes > 1.25*prevPaInitRes)
+      nonOrthSolveI++;
+      if (!std::isfinite(paInitRes) || !std::isfinite(paLastFinalRes))
       {
-          paDivergeCount++;
-      }
-      else
-      {
-          paDivergeCount = 0;
-      }
-      prevPaInitRes = paInitRes;
-      if (paDivergeCount >= 3)
-      {
-          Info<< "Warning: pa residual diverging; restoring last safe Ua/pa state and exiting inner loop." << endl;
-          Ua = UaSafe;
-          pa = paSafe;
-          phia = phiaSafe;
-          break;
-      }
-      if (paFinalRes < 1e-5 && i >= 2)
-      {
-          if (simple.finalNonOrthogonalIter())
-          {
-              phia = phiHbyAa - paEqn.flux();
-          }
-          UaSafe = Ua;
-          paSafe = pa;
-          phiaSafe = phia;
+          badPaResidual = true;
           break;
       }
 
@@ -187,6 +166,33 @@ for(i=0;i<50;i++)
       {
           phia = phiHbyAa - paEqn.flux();
       }
+  }
+
+  if (badPaResidual)
+  {
+      Info<< "Warning: non-finite pa residual detected; restoring last safe Ua/pa state." << endl;
+      Ua = UaSafe;
+      pa = paSafe;
+      phia = phiaSafe;
+      break;
+  }
+
+  if (i > 0 && paFirstInitRes > 1.15*prevPaInitRes)
+  {
+      paDivergeCount++;
+  }
+  else
+  {
+      paDivergeCount = 0;
+  }
+  prevPaInitRes = paFirstInitRes;
+  if (paDivergeCount >= 2)
+  {
+      Info<< "Warning: pa first-pass residual drifting up; restoring last safe Ua/pa state and exiting inner loop." << endl;
+      Ua = UaSafe;
+      pa = paSafe;
+      phia = phiaSafe;
+      break;
   }
 
   //#include "adjointContinuityErrs.H"
@@ -223,4 +229,9 @@ for(i=0;i<50;i++)
   UaSafe = Ua;
   paSafe = pa;
   phiaSafe = phia;
+
+  if (paLastFinalRes < 5e-5 && i >= 2)
+  {
+      break;
+  }
 }

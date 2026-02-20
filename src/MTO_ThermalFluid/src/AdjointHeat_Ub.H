@@ -1,9 +1,10 @@
 scalar prevPbInitRes = 1e300;
 label pbDivergeCount = 0;
+const label maxAdjUbIter = 15;
 volVectorField UbSafe(Ub);
 volScalarField pbSafe(pb);
 surfaceScalarField phibSafe(phib);
-for(i=0;i<50;i++)
+for(i=0;i<maxAdjUbIter;i++)
 {    
 volVectorField adjointTransposeConvectionb((fvc::grad(U) & Ub));
 
@@ -100,6 +101,10 @@ tUbEqn.clear();
 // Update the pressure BCs to ensure flux consistency
 constrainPressure(pb, Ub, phiHbyAb, rAtUb(), MRF);  
 // Non-orthogonal pressure corrector loop
+bool badPbResidual = false;
+scalar pbFirstInitRes = 1e300;
+scalar pbLastFinalRes = 1e300;
+label nonOrthSolveI = 0;
 while (simple.correctNonOrthogonal())
 {
     fvScalarMatrix pbEqn
@@ -110,44 +115,16 @@ while (simple.correctNonOrthogonal())
     pbEqn.setReference(pbRefCell, pbRefValue);
     SolverPerformance<scalar> sppb = pbEqn.solve();
     logSolverStats(runTime, "AdjointHeat_Ub", i, "pb", sppb, opt, runTime.timeName());
-
     const scalar pbInitRes = sppb.initialResidual();
-    const scalar pbFinalRes = sppb.finalResidual();
-    if (!std::isfinite(pbInitRes) || !std::isfinite(pbFinalRes))
+    pbLastFinalRes = sppb.finalResidual();
+    if (nonOrthSolveI == 0)
     {
-        Info<< "Warning: non-finite pb residual detected; restoring last safe Ub/pb state." << endl;
-        Ub = UbSafe;
-        pb = pbSafe;
-        phib = phibSafe;
-        break;
+        pbFirstInitRes = pbInitRes;
     }
-    if (i > 0 && pbInitRes > 1.25*prevPbInitRes)
+    nonOrthSolveI++;
+    if (!std::isfinite(pbInitRes) || !std::isfinite(pbLastFinalRes))
     {
-        pbDivergeCount++;
-    }
-    else
-    {
-        pbDivergeCount = 0;
-    }
-    prevPbInitRes = pbInitRes;
-    if (pbDivergeCount >= 3)
-    {
-        Info<< "Warning: pb residual diverging; restoring last safe Ub/pb state and exiting inner loop." << endl;
-        Ub = UbSafe;
-        pb = pbSafe;
-        phib = phibSafe;
-        break;
-    }
-    if (pbFinalRes < 1e-5 && i >= 2)
-    {
-        // Converged enough for this outer optimization iteration
-        if (simple.finalNonOrthogonalIter())
-        {
-            phib = phiHbyAb - pbEqn.flux();
-        }
-        UbSafe = Ub;
-        pbSafe = pb;
-        phibSafe = phib;
+        badPbResidual = true;
         break;
     }
 
@@ -155,6 +132,33 @@ while (simple.correctNonOrthogonal())
     {
         phib = phiHbyAb - pbEqn.flux();
     }
+}
+
+if (badPbResidual)
+{
+    Info<< "Warning: non-finite pb residual detected; restoring last safe Ub/pb state." << endl;
+    Ub = UbSafe;
+    pb = pbSafe;
+    phib = phibSafe;
+    break;
+}
+
+if (i > 0 && pbFirstInitRes > 1.15*prevPbInitRes)
+{
+    pbDivergeCount++;
+}
+else
+{
+    pbDivergeCount = 0;
+}
+prevPbInitRes = pbFirstInitRes;
+if (pbDivergeCount >= 2)
+{
+    Info<< "Warning: pb first-pass residual drifting up; restoring last safe Ub/pb state and exiting inner loop." << endl;
+    Ub = UbSafe;
+    pb = pbSafe;
+    phib = phibSafe;
+    break;
 }
 
 // Guard against non-finite adjoint fields before correction
@@ -191,4 +195,9 @@ phib.storePrevIter();
 UbSafe = Ub;
 pbSafe = pb;
 phibSafe = phib;
+
+if (pbLastFinalRes < 5e-5 && i >= 2)
+{
+    break;
+}
 }
