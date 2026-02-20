@@ -31,6 +31,15 @@ scalar Pnorm(readScalar(optProperties.lookup("Pnorm")));
 scalar objFunction(readScalar(optProperties.lookup("objFunction")));
 scalar nAdjTurbPasses(optProperties.lookupOrDefault<scalar>("nAdjTurbPasses", 1));
 scalar turbSensDamp(optProperties.lookupOrDefault<scalar>("turbSensDamp", 0));
+// Robust adjoint framework controls
+scalar adjPseudoInvDtUa(optProperties.lookupOrDefault<scalar>("adjPseudoInvDtUa", 50.0));
+scalar adjPseudoInvDtUb(optProperties.lookupOrDefault<scalar>("adjPseudoInvDtUb", 25.0));
+scalar adjPseudoInvDtTb(optProperties.lookupOrDefault<scalar>("adjPseudoInvDtTb", 10.0));
+scalar adjPseudoInvDtTurb(optProperties.lookupOrDefault<scalar>("adjPseudoInvDtTurb", 100.0));
+scalar adjTurbBetaMin(optProperties.lookupOrDefault<scalar>("adjTurbBetaMin", 0.2));
+label adjTurbRampStart(optProperties.lookupOrDefault<label>("adjTurbRampStart", 1));
+label adjTurbRampEnd(optProperties.lookupOrDefault<label>("adjTurbRampEnd", 80));
+label adjTurbLagEvery(optProperties.lookupOrDefault<label>("adjTurbLagEvery", 2));
 label diagLevel(optProperties.lookupOrDefault<label>("diagLevel", 1));
 label diagEvery(optProperties.lookupOrDefault<label>("diagEvery", 5));
 label diagRank(optProperties.lookupOrDefault<label>("diagRank", -1));

@@ -9,11 +9,25 @@ surfaceScalarField phiaSafe(phia);
 for(i=0;i<maxAdjUaIter;i++)
 { 
   const word uaStage(word("UaLoop_") + Foam::name(i));
+  const scalar rampDen = Foam::max(scalar(adjTurbRampEnd - adjTurbRampStart), scalar(1));
+  const scalar rampXi = Foam::min
+  (
+      scalar(1),
+      Foam::max(scalar(0), scalar(opt - adjTurbRampStart)/rampDen)
+  );
+  const scalar turbAdjBeta = Foam::min(scalar(1), Foam::max(adjTurbBetaMin + (1.0 - adjTurbBetaMin)*rampXi, scalar(0)));
+  const dimensionedScalar betaAdj("betaAdj", dimless, turbAdjBeta);
+  const dimensionedScalar adjPseudoUa("adjPseudoUa", dimless/dimTime, adjPseudoInvDtUa);
   const volScalarField magUStage("magUStage", mag(U));
   const scalar UavgStage = Foam::max(gAverage(magUStage.primitiveField()), 1e-8);
   const scalar UmaxStage = Foam::max(gMax(magUStage.primitiveField()), UavgStage);
-  const scalar UaHardCap = Foam::max(1e6*UmaxStage, 1e3);
-  const scalar paHardCap = Foam::max(1e6*UmaxStage*UmaxStage, 1e5);
+  const volScalarField magUaSafe("magUaSafe", mag(UaSafe));
+  const volScalarField magPaSafe("magPaSafe", mag(paSafe));
+  const scalar UaSafeAvg = Foam::max(gAverage(magUaSafe.primitiveField()), 1e-8);
+  const scalar paSafeAvg = Foam::max(gAverage(magPaSafe.primitiveField()), 1e-8);
+  // Cap with adjoint-history scale plus primal-based ceiling.
+  const scalar UaHardCap = Foam::min(Foam::max(50.0*UaSafeAvg, 1e3), Foam::max(1e6*UmaxStage, 1e3));
+  const scalar paHardCap = Foam::min(Foam::max(50.0*paSafeAvg, 1e4), Foam::max(1e6*UmaxStage*UmaxStage, 1e5));
   volVectorField adjointTransposeConvectiona((fvc::grad(U) & Ua));
 
   volVectorField turbSourceUa(fvc::grad(pa) * scalar(0));  // zero by default
@@ -38,6 +52,7 @@ for(i=0;i<maxAdjUaIter;i++)
       turbSourceUa =
           -fvc::div(ka*2*nut*twoSymm(fvc::grad(U)))/kDenom
           -nut*fvc::div(omegaa*2*gamma1*twoSymm(fvc::grad(U)))/omegaDenom;
+      turbSourceUa *= betaAdj;
 
       // Robust bound independent of pa to avoid source-cap feedback blow-up:
       // cap by physical convective scale U^2/L and by historical growth.
@@ -76,6 +91,7 @@ for(i=0;i<maxAdjUaIter;i++)
       MTOdiag::logMetric(runTime, opt, uaStage, "turbSourceUa_usedMax", srcUsedMax);
       MTOdiag::logMetric(runTime, opt, uaStage, "k_floor", kFloorVal);
       MTOdiag::logMetric(runTime, opt, uaStage, "omega_floor", omegaFloorVal);
+      MTOdiag::logMetric(runTime, opt, uaStage, "turbAdjBeta", turbAdjBeta);
   }
 
   tmp<fvVectorMatrix> tUaEqn
@@ -83,6 +99,7 @@ for(i=0;i<maxAdjUaIter;i++)
       fvm::div(-phi, Ua)
     + adjointTransposeConvectiona
     - fvm::laplacian(turbulence->nuEff(), Ua)
+    + fvm::Sp(adjPseudoUa, Ua)
     + fvm::Sp(alpha, Ua)
    ==
       fvOptions(Ua)
@@ -256,6 +273,14 @@ for(i=0;i<maxAdjUaIter;i++)
       {
           uv = vector::zero;
       }
+      else
+      {
+          const scalar um = mag(uv);
+          if (um > UaHardCap)
+          {
+              uv *= (UaHardCap/(um + VSMALL));
+          }
+      }
   }
   forAll(pa, cellI)
   {
@@ -264,18 +289,26 @@ for(i=0;i<maxAdjUaIter;i++)
       {
           pv = 0.0;
       }
+      else if (pv > paHardCap)
+      {
+          pv = paHardCap;
+      }
+      else if (pv < -paHardCap)
+      {
+          pv = -paHardCap;
+      }
   }
   MTOdiag::logVectorFieldHealth(runTime, opt, uaStage, "Ua", Ua.primitiveField());
   MTOdiag::logScalarFieldHealth(runTime, opt, uaStage, "pa", pa.primitiveField());
   const volScalarField magUaNow("magUaNow", mag(Ua));
   const volScalarField magPaNow("magPaNow", mag(pa));
-  const scalar UaMaxNow = gMax(magUaNow.primitiveField());
-  const scalar paAbsMaxNow = gMax(magPaNow.primitiveField());
+  const scalar UaMaxNow = Foam::max(magUaNow.primitiveField());
+  const scalar paAbsMaxNow = Foam::max(magPaNow.primitiveField());
   MTOdiag::logMetric(runTime, opt, uaStage, "Ua_hardCap", UaHardCap);
   MTOdiag::logMetric(runTime, opt, uaStage, "pa_hardCap", paHardCap);
   MTOdiag::logMetric(runTime, opt, uaStage, "Ua_absMax", UaMaxNow);
   MTOdiag::logMetric(runTime, opt, uaStage, "pa_absMax", paAbsMaxNow);
-  if (!std::isfinite(UaMaxNow) || !std::isfinite(paAbsMaxNow) || UaMaxNow > UaHardCap || paAbsMaxNow > paHardCap)
+  if (!std::isfinite(UaMaxNow) || !std::isfinite(paAbsMaxNow) || UaMaxNow > 1.05*UaHardCap || paAbsMaxNow > 1.05*paHardCap)
   {
       Info<< "Warning: Ua/pa exceeded hard cap; restoring last safe Ua/pa state and exiting inner loop." << endl;
       Ua = UaSafe;

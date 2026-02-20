@@ -35,6 +35,19 @@ objFunction         1;
 nAdjTurbPasses      2;
 // Turbulence sensitivity damping coeff (0=off; use if Rk/Romega have -c*alpha*k/omega in solid)
 turbSensDamp        0;
+// -------------------------------------------------------------------------
+// Robust adjoint framework controls
+// Pseudo-transient inverse time scales [1/s]-like diagonal shifts for robustness
+adjPseudoInvDtUa    50;
+adjPseudoInvDtUb    25;
+adjPseudoInvDtTb    10;
+adjPseudoInvDtTurb  100;
+// Turbulence-adjoint continuation beta: ramps from adjTurbBetaMin to 1
+adjTurbBetaMin      0.2;
+adjTurbRampStart    1;
+adjTurbRampEnd      80;
+// Lag turbulence-adjoint solves every N optimization iterations (frozen otherwise)
+adjTurbLagEvery     2;
 // Diagnostics controls: 0=off, 1=light(metrics), 2=full(field health)
 diagLevel           2;
 // Log diagnostics every N optimization iterations

@@ -7,6 +7,7 @@ surfaceScalarField phibSafe(phib);
 for(i=0;i<maxAdjUbIter;i++)
 {    
 const word ubStage(word("UbLoop_") + Foam::name(i));
+const dimensionedScalar adjPseudoUb("adjPseudoUb", dimless/dimTime, adjPseudoInvDtUb);
 volVectorField adjointTransposeConvectionb((fvc::grad(U) & Ub));
 
 tmp<fvVectorMatrix> tUbEqn
@@ -14,6 +15,7 @@ tmp<fvVectorMatrix> tUbEqn
     fvm::div(-phi, Ub)
   + adjointTransposeConvectionb
   - fvm::laplacian(turbulence->nuEff(), Ub)
+  + fvm::Sp(adjPseudoUb, Ub)
   + fvm::Sp(alpha, Ub)
   + b1*Tb*fvc::grad(T)
  ==

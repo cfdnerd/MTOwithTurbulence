@@ -4,6 +4,15 @@
 {
     if (mesh.thisDb().foundObject<volScalarField>("k") && mesh.thisDb().foundObject<volScalarField>("omega"))
     {
+        const scalar rampDen = Foam::max(scalar(adjTurbRampEnd - adjTurbRampStart), scalar(1));
+        const scalar rampXi = Foam::min
+        (
+            scalar(1),
+            Foam::max(scalar(0), scalar(opt - adjTurbRampStart)/rampDen)
+        );
+        const scalar turbAdjBeta = Foam::min(scalar(1), Foam::max(adjTurbBetaMin + (1.0 - adjTurbBetaMin)*rampXi, scalar(0)));
+        const dimensionedScalar betaAdj("betaAdj", dimless, turbAdjBeta);
+        const dimensionedScalar adjPseudoTurb("adjPseudoTurb", dimless/dimTime, adjPseudoInvDtTurb);
         const volScalarField& k = mesh.thisDb().lookupObject<volScalarField>("k");
         const volScalarField& omega = mesh.thisDb().lookupObject<volScalarField>("omega");
         const volScalarField& nut = turbulence->nut();
@@ -54,9 +63,10 @@
         (
             - fvm::div(phi, ka)
             - fvm::laplacian(DkEff, ka)
+            + fvm::Sp(adjPseudoTurb, ka)
             + fvm::Sp(betaStar*omega, ka)
          ==
-            kaRhsMomentum + kaRhsThermal
+            betaAdj*(kaRhsMomentum + kaRhsThermal)
         );
         kaEqn.relax();
         SolverPerformance<scalar> spKa = kaEqn.solve();
@@ -67,12 +77,14 @@
         (
             - fvm::div(phi, omegaa)
             - fvm::laplacian(DomegaEff, omegaa)
+            + fvm::Sp(adjPseudoTurb, omegaa)
             + fvm::Sp(scalar(2)*beta2.value()*omega, omegaa)
          ==
-            omegaaRhsMomentum + omegaaRhsThermal
+            betaAdj*(omegaaRhsMomentum + omegaaRhsThermal)
         );
         omegaaEqn.relax();
         SolverPerformance<scalar> spOmegaa = omegaaEqn.solve();
         logSolverStats(runTime, "Adjoint_kOmegaSST", 0, "omegaa", spOmegaa, opt, runTime.timeName());
+        MTOdiag::logMetric(runTime, opt, "Adjoint_kOmegaSST", "turbAdjBeta", turbAdjBeta);
     }
 }

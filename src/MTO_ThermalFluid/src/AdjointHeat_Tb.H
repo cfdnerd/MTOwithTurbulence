@@ -9,10 +9,12 @@ reduce(sumT, sumOp<scalar>());
 sumT=std::pow(sumT,1.0/Pnorm-1);
 
 // alphaEff floored in Primal_T; use same field for consistency
+const dimensionedScalar adjPseudoTb("adjPseudoTb", dimless/dimTime, adjPseudoInvDtTb);
 fvScalarMatrix TEqnb
 (
    -fvm::div(-phi,Tb) 
    +fvm::laplacian(alphaEff, Tb)
+   +fvm::Sp(adjPseudoTb, Tb)
 );
 if (objFunction==1)
 {

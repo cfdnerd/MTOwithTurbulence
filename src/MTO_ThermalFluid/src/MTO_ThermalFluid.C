@@ -37,9 +37,19 @@ int main(int argc, char *argv[])
         #include "Primal_U.H"
         #include "Primal_T.H"
         #include "AdjointHeat_Tb.H"
+        const bool doTurbAdjSolveThisOpt =
+        (
+            adjTurbLagEvery <= 1
+         || opt <= adjTurbRampEnd
+         || ((opt % adjTurbLagEvery) == 0)
+        );
+        MTOdiag::logMetric(runTime, opt, "AdjointLoop", "doTurbAdjSolve", doTurbAdjSolveThisOpt ? 1.0 : 0.0);
         for (label pass = 0; pass < nAdjTurbPasses; pass++)
         {
-            #include "Adjoint_kOmegaSST.H"
+            if (doTurbAdjSolveThisOpt || pass == 0)
+            {
+                #include "Adjoint_kOmegaSST.H"
+            }
             #include "AdjointHeat_Ub.H"
             #include "AdjointFlow_Ua.H"
         }
