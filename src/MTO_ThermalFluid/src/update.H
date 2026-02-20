@@ -27,7 +27,9 @@ if(opt<=63)
 {
   alphaMax=alphamax*(opt/7.0+1.0);
 }
-if(opt>100)
+// Freeze alphaMax when design is extreme (solid-heavy) to avoid ill-conditioning
+scalar xhMinVal = gMin(xh);
+if(opt>100 && xhMinVal >= 0.15)
 {
   alphaMax=alphaMax*1.02;
 }
@@ -49,10 +51,10 @@ if(opt>=80)
 }
 qu=Foam::min(qu,0.01);
 // Adaptive xh floor: when design is solid-heavy (min xh low), raise floor to avoid alpha spikes and FPE
-scalar xhMinVal = gMin(xh);
 scalar xhFloorVal = (xhMinVal < 0.15) ? 0.03 : ((xhMinVal < 0.05) ? 0.02 : 1e-3);
 const volScalarField xhSafe(Foam::max(xh, scalar(xhFloorVal)));
 volScalarField alphaRaw(alphaMax*qu*(1-xhSafe)/(qu+xhSafe));
 scalar alphaCapVal = (xhMinVal < 0.15) ? Foam::min(scalar(3e3), alphaMaxMesh) : Foam::min(scalar(1e4), alphaMaxMesh);
 alpha=Foam::min(alphaRaw, dimensionedScalar("alphaCap", alphaRaw.dimensions(), alphaCapVal));
-DT=(ks+(kf-ks)*xh*(1+qu)/(qu+xh))/rhoc;
+// Use xhSafe in DT to limit thermal diffusivity range and improve matrix conditioning
+DT=(ks+(kf-ks)*xhSafe*(1+qu)/(qu+xhSafe))/rhoc;

@@ -8,6 +8,7 @@ for(i=0;i<n;i++)
 reduce(sumT, sumOp<scalar>());
 sumT=std::pow(sumT,1.0/Pnorm-1);
 
+// alphaEff floored in Primal_T; use same field for consistency
 fvScalarMatrix TEqnb
 (
    -fvm::div(-phi,Tb) 

@@ -38,9 +38,11 @@ for(i=0;i<n;i++)
 
 Info<< "\n run MMA \n" << endl;
 mma.MMAsolver(xmma, dfdx, gx, dgdx);
+// Design-update under-relaxation when solid-heavy to avoid ill-conditioned designs
+scalar designRelax = (gMin(xh) < 0.15) ? 0.5 : 1.0;
 for(i=0;i<n;i++)
 {
-   x[i]=xmma[i];
+   x[i] = x[i] + designRelax*(xmma[i] - x[i]);
 }
 
 #include "filter_x.H"
