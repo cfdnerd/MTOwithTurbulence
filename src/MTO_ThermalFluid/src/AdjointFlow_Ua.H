@@ -16,6 +16,10 @@ for(i=0;i<maxAdjUaIter;i++)
       Foam::max(scalar(0), scalar(opt - adjTurbRampStart)/rampDen)
   );
   const scalar turbAdjBeta = Foam::min(scalar(1), Foam::max(adjTurbBetaMin + (1.0 - adjTurbBetaMin)*rampXi, scalar(0)));
+  // Later coupling passes act as corrections; damp their forcing to prevent re-amplification.
+  const scalar passDecayClamped = Foam::min(Foam::max(adjUaPassDecay, scalar(0)), scalar(1));
+  const scalar passMinGain = Foam::min(Foam::max(adjUaPassMinGain, scalar(0)), scalar(1));
+  const scalar passGain = Foam::max(passMinGain, Foam::pow(passDecayClamped, scalar(pass)));
   const dimensionedScalar betaAdj("betaAdj", dimless, turbAdjBeta);
   const dimensionedScalar adjPseudoUa("adjPseudoUa", dimless/dimTime, adjPseudoInvDtUa);
   const volScalarField magUStage("magUStage", mag(U));
@@ -53,6 +57,7 @@ for(i=0;i<maxAdjUaIter;i++)
           -fvc::div(ka*2*nut*twoSymm(fvc::grad(U)))/kDenom
           -nut*fvc::div(omegaa*2*gamma1*twoSymm(fvc::grad(U)))/omegaDenom;
       turbSourceUa *= betaAdj;
+      turbSourceUa *= passGain;
 
       // Robust bound independent of pa to avoid source-cap feedback blow-up:
       // cap by physical convective scale U^2/L and by historical growth.
@@ -65,6 +70,7 @@ for(i=0;i<maxAdjUaIter;i++)
           ? Foam::max(5.0*prevTurbSourceUaMax, 1e-2)
           : srcCapPhys;
       const scalar srcMaxAbs = Foam::min(srcCapPhys, srcCapHist);
+      const scalar localCapCoeff = Foam::max(adjUaLocalCapCoeff, scalar(0));
       scalar srcUsedMax = 0.0;
       forAll(turbSourceUa, cellI)
       {
@@ -76,9 +82,12 @@ for(i=0;i<maxAdjUaIter;i++)
           else
           {
               const scalar sm = mag(sv);
-              if (sm > srcMaxAbs)
+              const scalar Um = mag(U[cellI]);
+              const scalar srcCapLocal = Foam::max(localCapCoeff*Um*Um/Foam::max(hChar, 1e-8), 1e-2);
+              const scalar srcCellCap = Foam::min(srcMaxAbs, srcCapLocal);
+              if (sm > srcCellCap)
               {
-                  sv *= (srcMaxAbs/(sm + VSMALL));
+                  sv *= (srcCellCap/(sm + VSMALL));
               }
               srcUsedMax = Foam::max(srcUsedMax, mag(sv));
           }
@@ -92,6 +101,8 @@ for(i=0;i<maxAdjUaIter;i++)
       MTOdiag::logMetric(runTime, opt, uaStage, "k_floor", kFloorVal);
       MTOdiag::logMetric(runTime, opt, uaStage, "omega_floor", omegaFloorVal);
       MTOdiag::logMetric(runTime, opt, uaStage, "turbAdjBeta", turbAdjBeta);
+      MTOdiag::logMetric(runTime, opt, uaStage, "turbSourceUa_passGain", passGain);
+      MTOdiag::logMetric(runTime, opt, uaStage, "turbSourceUa_localCoeff", localCapCoeff);
   }
 
   tmp<fvVectorMatrix> tUaEqn

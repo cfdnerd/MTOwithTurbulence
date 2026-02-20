@@ -55,6 +55,9 @@ adjTurbLagEvery     2;         // Solve turbulence adjoint every N opt iteration
 adjHeatBetaMin      0.2;       // Initial heat-adjoint continuation factor for Ub source
 adjHeatRampStart    1;         // Iteration to start heat-adjoint beta ramp
 adjHeatRampEnd      120;       // Iteration to finish heat-adjoint beta ramp
+adjUaPassDecay      0.35;      // Extra Ua-source damping factor applied per adjoint pass (>0)
+adjUaPassMinGain    0.10;      // Minimum Ua-source gain floor for later adjoint passes
+adjUaLocalCapCoeff  200;       // Local Ua-source cap coefficient on U^2/L convective scale
 
 // ========================= Runtime Diagnostics ======================== //
 diagLevel           2;         // 0: off, 1: metrics, 2: full field-health logs
