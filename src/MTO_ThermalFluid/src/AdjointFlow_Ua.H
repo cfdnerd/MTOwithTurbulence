@@ -9,17 +9,28 @@ surfaceScalarField phiaSafe(phia);
 for(i=0;i<maxAdjUaIter;i++)
 { 
   const word uaStage(word("UaLoop_") + Foam::name(i));
+  scalar tbAbsMaxNow = 0.0;
+  if (mesh.thisDb().foundObject<volScalarField>("Tb"))
+  {
+      const volScalarField& TbFld = mesh.thisDb().lookupObject<volScalarField>("Tb");
+      const volScalarField magTbNow("magTbNow", mag(TbFld));
+      tbAbsMaxNow = Foam::max(gMax(magTbNow.primitiveField()), 0.0);
+  }
+  MTOdiag::logMetric(runTime, opt, uaStage, "uaAllPass_tbAbsMax", tbAbsMaxNow);
+  MTOdiag::logMetric(runTime, opt, uaStage, "uaAllPass_tbAbsMaxLimit", adjUaAllPassTbMax);
+  if (!std::isfinite(tbAbsMaxNow) || tbAbsMaxNow > adjUaAllPassTbMax)
+  {
+      MTOdiag::logMetric(runTime, opt, uaStage, "uaAllPass_skipped", 1.0);
+      Ua = UaSafe;
+      pa = paSafe;
+      phia = phiaSafe;
+      break;
+  }
+  MTOdiag::logMetric(runTime, opt, uaStage, "uaAllPass_skipped", 0.0);
   // In higher coupling passes, Tb can become temporarily non-physical and destabilize Ua solve.
   // When that happens, keep last safe Ua/pa state and skip the corrective pass update.
   if (pass > 0)
   {
-      scalar tbAbsMaxNow = 0.0;
-      if (mesh.thisDb().foundObject<volScalarField>("Tb"))
-      {
-          const volScalarField& TbFld = mesh.thisDb().lookupObject<volScalarField>("Tb");
-          const volScalarField magTbNow("magTbNow", mag(TbFld));
-          tbAbsMaxNow = Foam::max(gMax(magTbNow.primitiveField()), 0.0);
-      }
       MTOdiag::logMetric(runTime, opt, uaStage, "uaHigherPass_tbAbsMax", tbAbsMaxNow);
       MTOdiag::logMetric(runTime, opt, uaStage, "uaHigherPass_tbAbsMaxLimit", adjUaHigherPassTbMax);
       if (!std::isfinite(tbAbsMaxNow) || tbAbsMaxNow > adjUaHigherPassTbMax)
@@ -55,6 +66,10 @@ for(i=0;i<maxAdjUaIter;i++)
   // Cap with adjoint-history scale plus primal-based ceiling.
   const scalar UaHardCap = Foam::min(Foam::max(50.0*UaSafeAvg, 1e3), Foam::max(1e6*UmaxStage, 1e3));
   const scalar paHardCap = Foam::min(Foam::max(50.0*paSafeAvg, 1e4), Foam::max(1e6*UmaxStage*UmaxStage, 1e5));
+  const scalar nCell = Foam::max(scalar(mesh.nCells()), scalar(1));
+  const scalar volTot = Foam::max(gSum(mesh.V()), scalar(1e-30));
+  const scalar hChar = Foam::pow(volTot/nCell, 1.0/3.0);
+  const scalar convScale = Foam::max(UmaxStage*UmaxStage/Foam::max(hChar, 1e-8), 1e-8);
   volVectorField adjointTransposeConvectiona((fvc::grad(U) & Ua));
 
   volVectorField turbSourceUa(fvc::grad(pa) * scalar(0));  // zero by default
@@ -84,10 +99,6 @@ for(i=0;i<maxAdjUaIter;i++)
 
       // Robust bound independent of pa to avoid source-cap feedback blow-up:
       // cap by physical convective scale U^2/L and by historical growth.
-      const scalar nCell = Foam::max(scalar(mesh.nCells()), scalar(1));
-      const scalar volTot = Foam::max(gSum(mesh.V()), scalar(1e-30));
-      const scalar hChar = Foam::pow(volTot/nCell, 1.0/3.0);
-      const scalar convScale = Foam::max(UmaxStage*UmaxStage/Foam::max(hChar, 1e-8), 1e-8);
       const scalar srcCapPhys = Foam::max(1e3*convScale, 1e-2);
       const scalar srcCapHist = (prevTurbSourceUaMax > 0.0)
           ? Foam::max(5.0*prevTurbSourceUaMax, 1e-2)
@@ -144,7 +155,30 @@ for(i=0;i<maxAdjUaIter;i++)
 
   fvOptions.constrain(UaEqn);
 
-  SolverPerformance<vector> spUa = solve(UaEqn == -fvc::grad(pa) + turbSourceUa);
+  volVectorField uaRHS("uaRHS", -fvc::grad(pa) + turbSourceUa);
+  const scalar uaRhsCapAbs = Foam::max(adjUaRhsCapCoeff*convScale, 1e-2);
+  scalar uaRhsUsedMax = 0.0;
+  forAll(uaRHS, cellI)
+  {
+      vector& rv = uaRHS[cellI];
+      if (!(std::isfinite(rv.x()) && std::isfinite(rv.y()) && std::isfinite(rv.z())))
+      {
+          rv = vector::zero;
+      }
+      else
+      {
+          const scalar rm = mag(rv);
+          if (rm > uaRhsCapAbs)
+          {
+              rv *= (uaRhsCapAbs/(rm + VSMALL));
+          }
+      }
+      uaRhsUsedMax = Foam::max(uaRhsUsedMax, mag(rv));
+  }
+  MTOdiag::logVectorFieldHealth(runTime, opt, uaStage, "uaRHS", uaRHS.primitiveField());
+  MTOdiag::logMetric(runTime, opt, uaStage, "uaRHS_capAbs", uaRhsCapAbs);
+  MTOdiag::logMetric(runTime, opt, uaStage, "uaRHS_usedMax", uaRhsUsedMax);
+  SolverPerformance<vector> spUa = solve(UaEqn == uaRHS);
   logSolverStats(runTime, "AdjointFlow_Ua", i, "Ua", spUa, opt, runTime.timeName());
 
   fvOptions.correct(Ua);
