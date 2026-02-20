@@ -1,13 +1,31 @@
 scalar prevPbInitRes = 1e300;
 label pbDivergeCount = 0;
 const label maxAdjUbIter = 15;
+scalar prevPhiHbyAbMax = -1.0;
 volVectorField UbSafe(Ub);
 volScalarField pbSafe(pb);
 surfaceScalarField phibSafe(phib);
 for(i=0;i<maxAdjUbIter;i++)
 {    
 const word ubStage(word("UbLoop_") + Foam::name(i));
+const scalar heatRampDen = Foam::max(scalar(adjHeatRampEnd - adjHeatRampStart), scalar(1));
+const scalar heatRampXi = Foam::min
+(
+    scalar(1),
+    Foam::max(scalar(0), scalar(opt - adjHeatRampStart)/heatRampDen)
+);
+const scalar heatAdjBeta = Foam::min(scalar(1), Foam::max(adjHeatBetaMin + (1.0 - adjHeatBetaMin)*heatRampXi, scalar(0)));
+const dimensionedScalar betaHeatAdj("betaHeatAdj", dimless, heatAdjBeta);
 const dimensionedScalar adjPseudoUb("adjPseudoUb", dimless/dimTime, adjPseudoInvDtUb);
+const volScalarField magUStageUb("magUStageUb", mag(U));
+const scalar UavgStageUb = Foam::max(gAverage(magUStageUb.primitiveField()), 1e-8);
+const scalar UmaxStageUb = Foam::max(gMax(magUStageUb.primitiveField()), UavgStageUb);
+const volScalarField magUbSafe("magUbSafe", mag(UbSafe));
+const volScalarField magPbSafe("magPbSafe", mag(pbSafe));
+const scalar UbSafeAvg = Foam::max(gAverage(magUbSafe.primitiveField()), 1e-8);
+const scalar pbSafeAvg = Foam::max(gAverage(magPbSafe.primitiveField()), 1e-8);
+const scalar UbHardCap = Foam::min(Foam::max(50.0*UbSafeAvg, 1e3), Foam::max(1e6*UmaxStageUb, 1e3));
+const scalar pbHardCap = Foam::min(Foam::max(50.0*pbSafeAvg, 1e4), Foam::max(1e6*UmaxStageUb*UmaxStageUb, 1e5));
 volVectorField adjointTransposeConvectionb((fvc::grad(U) & Ub));
 
 tmp<fvVectorMatrix> tUbEqn
@@ -17,7 +35,7 @@ tmp<fvVectorMatrix> tUbEqn
   - fvm::laplacian(turbulence->nuEff(), Ub)
   + fvm::Sp(adjPseudoUb, Ub)
   + fvm::Sp(alpha, Ub)
-  + b1*Tb*fvc::grad(T)
+  + betaHeatAdj*b1*Tb*fvc::grad(T)
  ==
     fvOptions(Ub)
 );
@@ -31,6 +49,22 @@ SolverPerformance<vector> spUb = solve(UbEqn == -fvc::grad(pb));
 logSolverStats(runTime, "AdjointHeat_Ub", i, "Ub", spUb, opt, runTime.timeName());
 
 fvOptions.correct(Ub);
+forAll(Ub, cellI)
+{
+    vector& uv = Ub[cellI];
+    if (!(std::isfinite(uv.x()) && std::isfinite(uv.y()) && std::isfinite(uv.z())))
+    {
+        uv = vector::zero;
+    }
+    else
+    {
+        const scalar um = mag(uv);
+        if (um > UbHardCap)
+        {
+            uv *= (UbHardCap/(um + VSMALL));
+        }
+    }
+}
 //****************************************
 volScalarField rAUb(1.0/UbEqn.A());
 const scalar rAUbAvg = Foam::max(gAverage(rAUb.primitiveField()), 1e-12);
@@ -87,8 +121,13 @@ if (useConsistentBranchUb)
     HbyAb -= (rAUb - rAtUb())*fvc::grad(pb);
 }
 MTOdiag::logScalarFieldHealth(runTime, opt, ubStage, "rAtUb", rAtUb().primitiveField());
-const scalar phiAbAvg = Foam::max(gAverage(mag(phiHbyAb.primitiveField())), 1e-12);
-const scalar phiAbMaxAbs = 1e6*phiAbAvg;
+const scalar phiBaseAvg = Foam::max(gAverage(mag(phi).primitiveField()), 1e-12);
+const scalar phiCapPhys = Foam::max(1e3*phiBaseAvg, 1e-8);
+const scalar phiCapHist = (prevPhiHbyAbMax > 0.0)
+    ? Foam::max(5.0*prevPhiHbyAbMax, 1e-8)
+    : phiCapPhys;
+const scalar phiAbMaxAbs = Foam::min(phiCapPhys, phiCapHist);
+scalar phiUsedMax = 0.0;
 forAll(phiHbyAb, faceI)
 {
     scalar& phiv = phiHbyAb[faceI];
@@ -100,8 +139,15 @@ forAll(phiHbyAb, faceI)
     {
         phiv = Foam::min(Foam::max(phiv, -phiAbMaxAbs), phiAbMaxAbs);
     }
+    phiUsedMax = Foam::max(phiUsedMax, Foam::mag(phiv));
 }
+prevPhiHbyAbMax = phiUsedMax;
 MTOdiag::logScalarFieldHealth(runTime, opt, ubStage, "phiHbyAb", phiHbyAb.primitiveField());
+MTOdiag::logMetric(runTime, opt, ubStage, "phiHbyAb_capPhys", phiCapPhys);
+MTOdiag::logMetric(runTime, opt, ubStage, "phiHbyAb_capHist", phiCapHist);
+MTOdiag::logMetric(runTime, opt, ubStage, "phiHbyAb_capUsed", phiAbMaxAbs);
+MTOdiag::logMetric(runTime, opt, ubStage, "phiHbyAb_usedMax", phiUsedMax);
+MTOdiag::logMetric(runTime, opt, ubStage, "heatAdjBeta", heatAdjBeta);
 tUbEqn.clear();
 
 // Update the pressure BCs to ensure flux consistency
@@ -187,9 +233,33 @@ forAll(pb, cellI)
     {
         pv = 0.0;
     }
+    else if (pv > pbHardCap)
+    {
+        pv = pbHardCap;
+    }
+    else if (pv < -pbHardCap)
+    {
+        pv = -pbHardCap;
+    }
 }
 MTOdiag::logVectorFieldHealth(runTime, opt, ubStage, "Ub", Ub.primitiveField());
 MTOdiag::logScalarFieldHealth(runTime, opt, ubStage, "pb", pb.primitiveField());
+const volScalarField magUbNow("magUbNow", mag(Ub));
+const volScalarField magPbNow("magPbNow", mag(pb));
+const scalar UbMaxNow = Foam::max(magUbNow.primitiveField());
+const scalar pbAbsMaxNow = Foam::max(magPbNow.primitiveField());
+MTOdiag::logMetric(runTime, opt, ubStage, "Ub_hardCap", UbHardCap);
+MTOdiag::logMetric(runTime, opt, ubStage, "pb_hardCap", pbHardCap);
+MTOdiag::logMetric(runTime, opt, ubStage, "Ub_absMax", UbMaxNow);
+MTOdiag::logMetric(runTime, opt, ubStage, "pb_absMax", pbAbsMaxNow);
+if (!std::isfinite(UbMaxNow) || !std::isfinite(pbAbsMaxNow) || UbMaxNow > 1.05*UbHardCap || pbAbsMaxNow > 1.05*pbHardCap)
+{
+    Info<< "Warning: Ub/pb exceeded hard cap; restoring last safe Ub/pb state and exiting inner loop." << endl;
+    Ub = UbSafe;
+    pb = pbSafe;
+    phib = phibSafe;
+    break;
+}
 
 //#include "adjointContinuityErrs.H"
 

@@ -40,6 +40,9 @@ scalar adjTurbBetaMin(optProperties.lookupOrDefault<scalar>("adjTurbBetaMin", 0.
 label adjTurbRampStart(optProperties.lookupOrDefault<label>("adjTurbRampStart", 1));
 label adjTurbRampEnd(optProperties.lookupOrDefault<label>("adjTurbRampEnd", 80));
 label adjTurbLagEvery(optProperties.lookupOrDefault<label>("adjTurbLagEvery", 2));
+scalar adjHeatBetaMin(optProperties.lookupOrDefault<scalar>("adjHeatBetaMin", 0.2));
+label adjHeatRampStart(optProperties.lookupOrDefault<label>("adjHeatRampStart", 1));
+label adjHeatRampEnd(optProperties.lookupOrDefault<label>("adjHeatRampEnd", 120));
 label diagLevel(optProperties.lookupOrDefault<label>("diagLevel", 1));
 label diagEvery(optProperties.lookupOrDefault<label>("diagEvery", 5));
 label diagRank(optProperties.lookupOrDefault<label>("diagRank", -1));
