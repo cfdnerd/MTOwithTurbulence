@@ -73,7 +73,7 @@ if(opt>1)
         fvScalarMatrix sens1Eqn(fvm::laplacian(sensTmp1)-fvm::Sp(bFilter2,sensTmp1)+dJdxpRaw*bFilter2);
         SolverPerformance<scalar> spS1 = sens1Eqn.solve();
         logSolverStats(runTime, "filter_chainrule", 0, "fsensStage2_fW", spS1, opt, runTime.timeName());
-        fsenshMeanT = sensTmp1 * bFilter2 * pMean * Foam::pow(Foam::max(xp1, scalar(xpFloor)), pMean - 1.0);
+        fsenshMeanT = sensTmp1 * pMean * Foam::pow(Foam::max(xp1, scalar(xpFloor)), pMean - 1.0);
     }
     else
     {
@@ -98,7 +98,7 @@ if(opt>1)
         fvScalarMatrix sens2Eqn(fvm::laplacian(sensTmp2)-fvm::Sp(bFilter2,sensTmp2)+dJdxpRaw*bFilter2);
         SolverPerformance<scalar> spS2 = sens2Eqn.solve();
         logSolverStats(runTime, "filter_chainrule", 0, "gsensPStage2_fW", spS2, opt, runTime.timeName());
-        gsenshPowerDiss = sensTmp2 * bFilter2 * pMean * Foam::pow(Foam::max(xp1, scalar(xpFloor)), pMean - 1.0);
+        gsenshPowerDiss = sensTmp2 * pMean * Foam::pow(Foam::max(xp1, scalar(xpFloor)), pMean - 1.0);
     }
     else
     {
@@ -123,7 +123,7 @@ if(opt>1)
         fvScalarMatrix sens3Eqn(fvm::laplacian(sensTmp3)-fvm::Sp(bFilter2,sensTmp3)+dJdxpRaw*bFilter2);
         SolverPerformance<scalar> spS3 = sens3Eqn.solve();
         logSolverStats(runTime, "filter_chainrule", 0, "gsensVStage2_fW", spS3, opt, runTime.timeName());
-        gsenshVol = sensTmp3 * bFilter2 * pMean * Foam::pow(Foam::max(xp1, scalar(xpFloor)), pMean - 1.0);
+        gsenshVol = sensTmp3 * pMean * Foam::pow(Foam::max(xp1, scalar(xpFloor)), pMean - 1.0);
     }
     else
     {
