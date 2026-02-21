@@ -136,27 +136,26 @@ for(i=0;i<maxAdjUaIter;i++)
       const scalar localCapCoeff = Foam::max(adjUaLocalCapCoeff, scalar(0));  // for logging only
       scalar srcUsedMax = 0.0;
       MTOdiag::logMetric(runTime, opt, uaStage, "uaTrace_beforeCapLoop", 1.0);
-      // Use global cap only (no per-cell Um/hChar division) to avoid FPE on partition-specific data
-      const scalar capVal = Foam::max(srcMaxAbs, 1e-2);
+      // Sanitize: non-finite -> zero; clamp components to avoid mag overflow (x^2+y^2+z^2 must stay < 1e308)
+      const scalar compCap = 1e100;  // 3*compCap^2 < 1e308
       forAll(turbSourceUa, cellI)
       {
           vector& sv = turbSourceUa[cellI];
           if (!(std::isfinite(sv.x()) && std::isfinite(sv.y()) && std::isfinite(sv.z())))
-          {
               sv = vector::zero;
-          }
           else
           {
-              const scalar sm = mag(sv);
-              if (sm > capVal)
-              {
-                  const scalar scale = capVal/Foam::max(sm, VSMALL);
-                  sv *= scale;
-              }
-              const scalar svMag = mag(sv);
-              srcUsedMax = Foam::max(srcUsedMax, std::isfinite(svMag) ? svMag : 0.0);
+              sv.x() = Foam::max(-compCap, Foam::min(compCap, sv.x()));
+              sv.y() = Foam::max(-compCap, Foam::min(compCap, sv.y()));
+              sv.z() = Foam::max(-compCap, Foam::min(compCap, sv.z()));
           }
       }
+      // Global cap via gMax (avoids per-cell mag/division FPE on partition-specific data)
+      const scalar capVal = Foam::max(srcMaxAbs, 1e-2);
+      const scalar maxMag = Foam::max(gMax(mag(turbSourceUa.primitiveField())), VSMALL);
+      if (maxMag > capVal)
+          turbSourceUa *= (capVal/maxMag);
+      srcUsedMax = gMax(mag(turbSourceUa.primitiveField()));
       prevTurbSourceUaMax = srcUsedMax;
       MTOdiag::logVectorFieldHealth(runTime, opt, uaStage, "turbSourceUa", turbSourceUa.primitiveField());
       MTOdiag::logMetric(runTime, opt, uaStage, "turbSourceUa_capPhys", srcCapPhys);
