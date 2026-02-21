@@ -43,28 +43,26 @@ mma_inc             1.2;       // MMA asymptote increase factor
 movlim              0.4;       // MMA move limit (larger = faster updates; 0.2 for gray suppression)
 
 // ========================================================================== //
-// 4. FILTER (structure and radii)                                            //
+// 4. LEGACY FILTER (with turbulence extension)                               //
 // ========================================================================== //
-// useCascadedFilter: no = legacy single-stage; yes = cascaded (use with filterStage2Nonlinear for gray suppression)
-useCascadedFilter   yes;       // yes + filterStage2Nonlinear yes = cascaded fW-mean (gray suppression)
-filterR             1.9;       // Stage 1 filter radius (smaller = less smoothing, less gray; was 2.2)
-filterR2            1.35;      // Stage 2 radius (tighter = less gray; was 1.6)
-filterStage2Nonlinear yes;     // yes = fW-mean power stage (gray suppression); no = linear PDE (more gray)
-filterPMean         8;         // fW-mean exponent p (higher = sharper, less gray; 8–12 for strong suppression)
-
-// Filter length scale (affects both legacy and cascaded)
+filterR             5;       // Filter radius (smaller = less smoothing, less gray; was 2.2)
+// Length scale (used by both cascaded and legacy)
 filterLenAniso      yes;       // yes = geometric-mean len for channel mesh; no = volume-based
-filterTurbReScale   no;        // yes = scale filterR by (Re_ref/Re)^0.5 for high-Re
+filterTurbReScale   no;        // yes = scale filterR by (Re_ref/Re)^0.5 for high-Re (legacy path)
 Re_ref              1000;      // Reference Re for filter scaling (when filterTurbReScale yes)
-
-// ========================================================================== //
-// 5. HEAVISIDE PROJECTION                                                    //
-// ========================================================================== //
-// (Legacy filter; cascaded uses same for its Heaviside stage)
+// Heaviside projection (legacy filter; cascaded uses same for its Heaviside stage)
 heavisideDelFactor  0.38;      // Heaviside ramp factor (higher = sharper, less gray; 0.35–0.4 for strong suppression)
 heavisideDelCap     180;       // Heaviside sharpness cap (higher = sharper at convergence)
 heavisideDelStart   25;        // Iteration to start sharpening (earlier = less gray by mid-run)
 heavisideDelInit    4;         // Initial del when opt<=heavisideDelStart (gentle)
+
+// ========================================================================== //
+// 5. CASCADED FILTER                                                         //
+// ========================================================================== //
+useCascadedFilter   no;        // yes = cascaded (stage1 + stage2); no = legacy single-stage
+filterR2            1.35;      // Stage 2 radius (tighter = less gray; was 1.6)
+filterStage2Nonlinear no;      // yes = fW-mean power stage (gray suppression); no = linear PDE (more gray)
+filterPMean         8;         // fW-mean exponent p (higher = sharper, less gray; 8–12 for strong suppression)
 
 // ========================================================================== //
 // 6. BRINKMAN & DENSITY PROJECTION                                           //
