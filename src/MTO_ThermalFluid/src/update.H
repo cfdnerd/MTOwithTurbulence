@@ -17,7 +17,7 @@ if(fluid_area)
 }
 // Reference convention: xh[test] set at init only (createFields), not overwritten per iteration
 // Design-boundary blend: blend design + test_area cells adjacent to fluid_area toward xh=1
-if(fluid_area && designBoundaryBlend > 1e-12)
+if(fluid_area && useDesignBoundaryBlend && designBoundaryBlend > 1e-12)
 {
    const labelList& own = mesh.owner();
    const labelList& nei = mesh.neighbour();

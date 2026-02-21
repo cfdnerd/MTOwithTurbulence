@@ -67,12 +67,13 @@ filterPMean         8;         // fW-mean exponent p (higher = sharper, less gra
 // ========================================================================== //
 // 6. BRINKMAN & DENSITY PROJECTION                                           //
 // ========================================================================== //
+useDesignBoundaryBlend no;     // Blend design cells adj to fluid toward xh=1 (yes = less gray at boundaries)
 quInit              0.008;     // Initial qu (larger = less stiff; was 0.005)
 quRampStart         100;       // Iteration to start qu ramp (was 80)
 quRampRate          8e-5;      // qu increment per opt (slower than 1e-4)
 quCap               0.012;     // qu cap (was 0.01)
 xhFloorTurbMult     1.5;       // Multiplier on xh floor for turbulent (1=laminar; 1.5=turbulent)
-designBoundaryBlend 0.12;      // Blend design cells adj to fluid/test toward 1 (stronger = less gray at boundaries)
+designBoundaryBlend 0.12;      // Blend strength when useDesignBoundaryBlend yes (0–1; stronger = less gray)
 
 // ========================================================================== //
 // 7. ADJOINT: COUPLING                                                       //

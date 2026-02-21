@@ -42,6 +42,7 @@ scalar quInit(optProperties.lookupOrDefault<scalar>("quInit", 0.008));
 label quRampStart(optProperties.lookupOrDefault<label>("quRampStart", 100));
 scalar quRampRate(optProperties.lookupOrDefault<scalar>("quRampRate", 8e-5));
 scalar quCap(optProperties.lookupOrDefault<scalar>("quCap", 0.012));
+Switch useDesignBoundaryBlend(optProperties.lookupOrDefault<Switch>("useDesignBoundaryBlend", Switch(false)));
 scalar designBoundaryBlend(optProperties.lookupOrDefault<scalar>("designBoundaryBlend", 0.08));
 Switch solid_area(optProperties.lookup("solid_area"));
 Switch fluid_area(optProperties.lookup("fluid_area"));
