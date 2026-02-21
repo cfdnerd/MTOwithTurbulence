@@ -68,11 +68,18 @@ if (objFunction==2)
    );
    TEqnb -= b2*sumT*Foam::pow(tNormSafe, Pnorm-1);
 }
-// Cap RHS source to avoid FPE in PBiCGStab from extreme residual values
+// Cap RHS source to avoid FPE in PBiCGStab from extreme residual values (crash-fix opt313)
 {
     scalarField& src = TEqnb.source();
-    const scalar srcMax = gMax(mag(src));
-    if (std::isfinite(srcMax) && srcMax > tbRhsCapMax && srcMax > 1e-30)
+    forAll(src, i)
+    {
+        if (!std::isfinite(src[i]))
+            src[i] = 0.0;
+    }
+    scalar srcMax = gMax(mag(src));
+    if (!std::isfinite(srcMax))
+        srcMax = 0.0;
+    if (srcMax > tbRhsCapMax && srcMax > 1e-30)
     {
         src *= tbRhsCapMax / srcMax;
         MTOdiag::logMetric(runTime, opt, tbStage, "tb_rhs_capped", 1.0);

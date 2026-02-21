@@ -17,8 +17,10 @@ reduce(N, sumOp<scalar>());
 
 scalar V(0),area=gSum(mesh.V()),MeanT(0),PowerDiss(0),maxT(0),sumT(0);
 double len=std::pow(Foam::max(area/N, 1e-30), 1.0/3);
-double denomSq = Foam::max(filterR*len/3.464, 1e-30);
-b.value()=1.0/(denomSq*denomSq);
+double denomSq1 = Foam::max(filterR*len/3.464, 1e-30);
+double denomSq2 = Foam::max(filterR2*len/3.464, 1e-30);
+b.value()=1.0/(denomSq1*denomSq1);
+bFilter2.value()=1.0/(denomSq2*denomSq2);
 //***********************************//MMA
 int m=2;//number of constraint
 MMA mma(n,m);

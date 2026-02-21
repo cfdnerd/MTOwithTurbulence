@@ -1,4 +1,5 @@
-// Cascaded sensitivity chain rule: dJ/dx via two PDE adjoint solves
+//***********************************// LEGACY: Single-stage sensitivity chain rule (set aside for cascaded)
+// Preserved from original implementation. Use filter_chainrule.H (cascaded) as default.
 // Normalize by max over DESIGN DOMAIN only; fixed-zone sensitivities can be orders
 // of magnitude larger (e.g. inlet/outlet) and would otherwise squash design updates
 {
@@ -7,6 +8,7 @@
     if(solid_area) { forAll(cells_solid,i) { tmpF[cells_solid[i]]=0; tmpG[cells_solid[i]]=0; } }
     if(fluid_area) { forAll(cells_fluid,i) { tmpF[cells_fluid[i]]=0; tmpG[cells_fluid[i]]=0; } }
     if(test_area)  { forAll(cells_test,i)  { tmpF[cells_test[i]]=0;  tmpG[cells_test[i]]=0;  } }
+    // Use 1e-12 floor (not VSMALL) to avoid overflow when design-domain sens are near zero
     const scalar sensFloor = 1e-12;
     scalar maxF = Foam::max(gMax(tmpF), sensFloor);
     scalar maxG = Foam::max(gMax(tmpG), sensFloor);
@@ -14,7 +16,7 @@
     gsenshPowerDiss /= maxG;
 }
 gsenshVol.primitiveFieldRef() = 1.0;
-// Zero sensitivities in fixed non-design zones
+// Zero sensitivities in fixed non-design zones so MMA does not update them
 if(solid_area)
 {
    forAll(cells_solid, i)
@@ -42,7 +44,7 @@ if(test_area)
       gsenshVol[cells_test[i]] = 0;
    }
 }
-//***********************************//Heaviside chain rule: dJ/dxh -> dJ/dxp
+//***********************************//Heaviside_filter
 if(opt>1)
 {
   for(i=0;i<n;i++)
@@ -60,46 +62,21 @@ if(opt>1)
   gsenshPowerDiss=gsenshPowerDiss*drho;
   gsenshVol=gsenshVol*drho;
 }
-//***********************************//Cascaded PDE adjoints: dJ/dxp -> dJ/dxp1 -> dJ/dx
-// Stage 2 adjoint: (laplacian - bFilter2)*sens1 = -bFilter2*dJ/dxp
-{
-    volScalarField sensTmp1("sensTmp1", fsenshMeanT);
-    fvScalarMatrix sens1Eqn(fvm::laplacian(sensTmp1)-fvm::Sp(bFilter2,sensTmp1)+fsenshMeanT*bFilter2);
-    SolverPerformance<scalar> spS1 = sens1Eqn.solve();
-    logSolverStats(runTime, "filter_chainrule", 0, "fsensStage2", spS1, opt, runTime.timeName());
-    fsenshMeanT = sensTmp1;
-}
-// Stage 1 adjoint: (laplacian - b)*fsensMeanT = -b*dJ/dxp1
+//***********************************//PDE filter
 {
     fvScalarMatrix fsensEqn(fvm::laplacian(fsensMeanT)-fvm::Sp(b,fsensMeanT)+fsenshMeanT*b);
     SolverPerformance<scalar> spFsens = fsensEqn.solve();
-    logSolverStats(runTime, "filter_chainrule", 1, "fsensMeanT", spFsens, opt, runTime.timeName());
-}
-// gsensPowerDiss: same cascaded chain
-{
-    volScalarField sensTmp2("sensTmp2", gsenshPowerDiss);
-    fvScalarMatrix sens2Eqn(fvm::laplacian(sensTmp2)-fvm::Sp(bFilter2,sensTmp2)+gsenshPowerDiss*bFilter2);
-    SolverPerformance<scalar> spS2 = sens2Eqn.solve();
-    logSolverStats(runTime, "filter_chainrule", 0, "gsensPStage2", spS2, opt, runTime.timeName());
-    gsenshPowerDiss = sensTmp2;
+    logSolverStats(runTime, "filter_chainrule", 0, "fsensMeanT", spFsens, opt, runTime.timeName());
 }
 {
     fvScalarMatrix gsensEqn(fvm::laplacian(gsensPowerDiss)-fvm::Sp(b,gsensPowerDiss)+gsenshPowerDiss*b);
     SolverPerformance<scalar> spGsensP = gsensEqn.solve();
-    logSolverStats(runTime, "filter_chainrule", 1, "gsensPowerDiss", spGsensP, opt, runTime.timeName());
-}
-// gsensVol: same cascaded chain
-{
-    volScalarField sensTmp3("sensTmp3", gsenshVol);
-    fvScalarMatrix sens3Eqn(fvm::laplacian(sensTmp3)-fvm::Sp(bFilter2,sensTmp3)+gsenshVol*bFilter2);
-    SolverPerformance<scalar> spS3 = sens3Eqn.solve();
-    logSolverStats(runTime, "filter_chainrule", 0, "gsensVStage2", spS3, opt, runTime.timeName());
-    gsenshVol = sensTmp3;
+    logSolverStats(runTime, "filter_chainrule", 0, "gsensPowerDiss", spGsensP, opt, runTime.timeName());
 }
 {
     fvScalarMatrix gvolEqn(fvm::laplacian(gsensVol)-fvm::Sp(b,gsensVol)+gsenshVol*b);
     SolverPerformance<scalar> spGsensV = gvolEqn.solve();
-    logSolverStats(runTime, "filter_chainrule", 1, "gsensVol", spGsensV, opt, runTime.timeName());
+    logSolverStats(runTime, "filter_chainrule", 0, "gsensVol", spGsensV, opt, runTime.timeName());
 }
 
 fsensMeanT.primitiveFieldRef()=fsensMeanT.primitiveFieldRef()*mesh.V()/gMax(mesh.V());

@@ -23,7 +23,8 @@ mma_init            0.3;       // MMA asymptote initialization factor
 mma_dec             0.7;       // MMA asymptote decrease factor
 mma_inc             1.2;       // MMA asymptote increase factor
 movlim              0.4;       // MMA move limit (0.4 per original MTO; larger = faster 0/1 convergence)
-filterR             2.2;       // Helmholtz/PDE filter radius (slightly smaller = sharper features)
+filterR             2.2;       // Cascaded stage 1: Helmholtz/PDE filter radius
+filterR2            1.6;       // Cascaded stage 2: second filter radius (smaller = sharper, better gray suppression)
 
 // ========================= Objective / Constraint ===================== //
 PowerDiss0          1e-12;     // Reference dissipation for normalization
@@ -49,6 +50,7 @@ adjPseudoInvDtTb    100000;    // Pseudo-transient inverse dt for Tb (strong dia
 tbPreSolveReset     1e3;       // Reset Tb to zero before solve if max|Tb| exceeds this (avoids ill-conditioned matrix)
 tbHardCapMax        1e4;       // Upper bound on Tb hard cap (keeps Tb from exploding)
 tbRhsCapMax         1e6;       // Max |RHS source| per cell; scale down if exceeded (avoids FPE in iterative solvers)
+adjTbGradTgradTbCapMax 1e10;   // Cap |grad(T)·grad(Tb)| in ka/omegaa thermal source (objFunction=1) to avoid blow-up
 adjPseudoInvDtTurb  100;       // Pseudo-transient inverse dt for ka/omegaa equations
 
 adjTurbBetaMin      0.2;       // Initial turbulence-adjoint continuation factor

@@ -1,12 +1,20 @@
-//***********************************//PDE filter
+//***********************************// Cascaded PDE filter (Lazarov & Wang 2016)
+// Two-stage Helmholtz filter for gray suppression in turbulent channel flows.
+// Stage 1: x -> xp1  |  Stage 2: xp1 -> xp  |  Heaviside: xp -> xh
+//***********************************//Stage 1: PDE filter x -> xp1
 {
-    fvScalarMatrix xpEqn(fvm::laplacian(xp)-fvm::Sp(b,xp)+x*b);
-    SolverPerformance<scalar> spXp = xpEqn.solve();
-    logSolverStats(runTime, "filter_x", 0, "xp", spXp, opt, runTime.timeName());
+    fvScalarMatrix xp1Eqn(fvm::laplacian(xp1)-fvm::Sp(b,xp1)+x*b);
+    SolverPerformance<scalar> spXp1 = xp1Eqn.solve();
+    logSolverStats(runTime, "filter_x", 0, "xp1", spXp1, opt, runTime.timeName());
 }
-//***********************************//Heaviside_filter
-// Sharper Heaviside: 0.35*opt ramp, cap 150 (original MTO archive used del up to 200)
-del=Foam::min(0.35*opt, 150);
+//***********************************//Stage 2: PDE filter xp1 -> xp
+{
+    fvScalarMatrix xpEqn(fvm::laplacian(xp)-fvm::Sp(bFilter2,xp)+xp1*bFilter2);
+    SolverPerformance<scalar> spXp = xpEqn.solve();
+    logSolverStats(runTime, "filter_x", 1, "xp", spXp, opt, runTime.timeName());
+}
+//***********************************//Heaviside projection (sharper ramp for cascaded)
+del=Foam::min(0.4*opt, 200);
 eta0=0.0001;
 eta1=1.0;
 y0=diff(xp,mesh.V(),del,eta0,n);

@@ -136,27 +136,37 @@ for(i=0;i<maxAdjUaIter;i++)
       const scalar localCapCoeff = Foam::max(adjUaLocalCapCoeff, scalar(0));  // for logging only
       scalar srcUsedMax = 0.0;
       MTOdiag::logMetric(runTime, opt, uaStage, "uaTrace_beforeCapLoop", 1.0);
-      // Sanitize: non-finite -> zero; clamp components to avoid mag overflow (x^2+y^2+z^2 must stay < 1e308)
-      const scalar compCap = 1e100;  // 3*compCap^2 < 1e308
+      // Sanitize: two-pass to avoid FPE from min/max on NaN/Inf (crash-fix opt313)
+      // compCap=1e50 keeps mag() safe (sqrt(3)*1e50 well below overflow)
+      const scalar compCap = 1e50;
       forAll(turbSourceUa, cellI)
       {
           vector& sv = turbSourceUa[cellI];
-          if (!(std::isfinite(sv.x()) && std::isfinite(sv.y()) && std::isfinite(sv.z())))
+          const scalar vx = sv.x(), vy = sv.y(), vz = sv.z();
+          const bool allFinite = (std::isfinite(vx) && std::isfinite(vy) && std::isfinite(vz));
+          if (!allFinite)
+          {
               sv = vector::zero;
+          }
           else
           {
-              sv.x() = Foam::max(-compCap, Foam::min(compCap, sv.x()));
-              sv.y() = Foam::max(-compCap, Foam::min(compCap, sv.y()));
-              sv.z() = Foam::max(-compCap, Foam::min(compCap, sv.z()));
+              sv.x() = Foam::max(-compCap, Foam::min(compCap, vx));
+              sv.y() = Foam::max(-compCap, Foam::min(compCap, vy));
+              sv.z() = Foam::max(-compCap, Foam::min(compCap, vz));
           }
       }
-      // Global cap via gMax (avoids per-cell mag/division FPE on partition-specific data)
+      // Global cap via gMax; guard against non-finite result (e.g. from overflow on other rank)
       const scalar capVal = Foam::max(srcMaxAbs, 1e-2);
-      const scalar maxMag = Foam::max(gMax(mag(turbSourceUa.primitiveField())), VSMALL);
+      scalar maxMag = gMax(mag(turbSourceUa.primitiveField()));
+      if (!std::isfinite(maxMag) || maxMag < VSMALL)
+          maxMag = capVal;
+      else
+          maxMag = Foam::max(maxMag, VSMALL);
       if (maxMag > capVal)
           turbSourceUa *= (capVal/maxMag);
       srcUsedMax = gMax(mag(turbSourceUa.primitiveField()));
-      prevTurbSourceUaMax = srcUsedMax;
+      if (std::isfinite(srcUsedMax) && srcUsedMax > 0.0)
+          prevTurbSourceUaMax = srcUsedMax;
       MTOdiag::logVectorFieldHealth(runTime, opt, uaStage, "turbSourceUa", turbSourceUa.primitiveField());
       MTOdiag::logMetric(runTime, opt, uaStage, "turbSourceUa_capPhys", srcCapPhys);
       MTOdiag::logMetric(runTime, opt, uaStage, "turbSourceUa_capHist", srcCapHist);

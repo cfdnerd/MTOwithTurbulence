@@ -22,7 +22,9 @@ scalar PowerDiss0(readScalar(optProperties.lookup("PowerDiss0")));
 scalar PowerDissMax(readScalar(optProperties.lookup("PowerDissMax")));
 scalar PowerDissRelax(readScalar(optProperties.lookup("PowerDissRelax")));
 scalar filterR(readScalar(optProperties.lookup("filterR")));
-dimensionedScalar b("b", dimensionSet(0,-2,0,0,0,0,0),1.0);//filter radius of the PDE filter
+scalar filterR2(optProperties.lookupOrDefault<scalar>("filterR2", filterR*0.7));  // cascaded stage 2
+dimensionedScalar b("b", dimensionSet(0,-2,0,0,0,0,0),1.0);//filter coeff stage 1 (PDE)
+dimensionedScalar bFilter2("bFilter2", dimensionSet(0,-2,0,0,0,0,0),1.0);//filter coeff stage 2 (cascaded)
 dimensionedScalar b1("b1", dimensionSet(0,2,-2,-2,0,0,0),1.0);
 Switch solid_area(optProperties.lookup("solid_area"));
 Switch fluid_area(optProperties.lookup("fluid_area"));
@@ -52,6 +54,7 @@ scalar adjUaHigherPassTbMax(optProperties.lookupOrDefault<scalar>("adjUaHigherPa
 scalar tbPreSolveReset(optProperties.lookupOrDefault<scalar>("tbPreSolveReset", 1e6));
 scalar tbHardCapMax(optProperties.lookupOrDefault<scalar>("tbHardCapMax", 1e6));
 scalar tbRhsCapMax(optProperties.lookupOrDefault<scalar>("tbRhsCapMax", 1e12));
+scalar adjTbGradTgradTbCapMax(optProperties.lookupOrDefault<scalar>("adjTbGradTgradTbCapMax", 1e10));
 label diagLevel(optProperties.lookupOrDefault<label>("diagLevel", 1));
 label diagEvery(optProperties.lookupOrDefault<label>("diagEvery", 5));
 label diagRank(optProperties.lookupOrDefault<label>("diagRank", -1));
@@ -66,6 +69,20 @@ volScalarField xp
         mesh,
         IOobject::NO_READ,
         IOobject::AUTO_WRITE
+    ),
+    mesh,
+    scalar(voluse),
+    zeroGradientFvPatchScalarField::typeName
+);
+volScalarField xp1
+(
+    IOobject
+    (
+        "xp1",
+        runTime.timeName(),
+        mesh,
+        IOobject::NO_READ,
+        IOobject::NO_WRITE
     ),
     mesh,
     scalar(voluse),
