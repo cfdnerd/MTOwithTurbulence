@@ -61,41 +61,38 @@ if(opt>1)
   gsenshVol=gsenshVol*drho;
 }
 //***********************************//Cascaded PDE adjoints: dJ/dxp -> dJ/dxp1 -> dJ/dx
-// Reuse xp1 as temporary (must be in fvSolution solvers)
-// Stage 2 adjoint: (laplacian - bFilter2)*xp1 = -bFilter2*dJ/dxp
+// Temporaries must match source dimensions (xp1 is dimensionless; sens fields are not)
+// sensTmp1/2/3 must be in fvSolution solvers
 {
-    xp1 = fsenshMeanT;
-    fvScalarMatrix sens1Eqn(fvm::laplacian(xp1)-fvm::Sp(bFilter2,xp1)+fsenshMeanT*bFilter2);
+    volScalarField sensTmp1("sensTmp1", fsenshMeanT);
+    fvScalarMatrix sens1Eqn(fvm::laplacian(sensTmp1)-fvm::Sp(bFilter2,sensTmp1)+fsenshMeanT*bFilter2);
     SolverPerformance<scalar> spS1 = sens1Eqn.solve();
     logSolverStats(runTime, "filter_chainrule", 0, "fsensStage2", spS1, opt, runTime.timeName());
-    fsenshMeanT = xp1;
+    fsenshMeanT = sensTmp1;
 }
-// Stage 1 adjoint: (laplacian - b)*fsensMeanT = -b*dJ/dxp1
 {
     fvScalarMatrix fsensEqn(fvm::laplacian(fsensMeanT)-fvm::Sp(b,fsensMeanT)+fsenshMeanT*b);
     SolverPerformance<scalar> spFsens = fsensEqn.solve();
     logSolverStats(runTime, "filter_chainrule", 1, "fsensMeanT", spFsens, opt, runTime.timeName());
 }
-// gsensPowerDiss: same cascaded chain
 {
-    xp1 = gsenshPowerDiss;
-    fvScalarMatrix sens2Eqn(fvm::laplacian(xp1)-fvm::Sp(bFilter2,xp1)+gsenshPowerDiss*bFilter2);
+    volScalarField sensTmp2("sensTmp2", gsenshPowerDiss);
+    fvScalarMatrix sens2Eqn(fvm::laplacian(sensTmp2)-fvm::Sp(bFilter2,sensTmp2)+gsenshPowerDiss*bFilter2);
     SolverPerformance<scalar> spS2 = sens2Eqn.solve();
     logSolverStats(runTime, "filter_chainrule", 0, "gsensPStage2", spS2, opt, runTime.timeName());
-    gsenshPowerDiss = xp1;
+    gsenshPowerDiss = sensTmp2;
 }
 {
     fvScalarMatrix gsensEqn(fvm::laplacian(gsensPowerDiss)-fvm::Sp(b,gsensPowerDiss)+gsenshPowerDiss*b);
     SolverPerformance<scalar> spGsensP = gsensEqn.solve();
     logSolverStats(runTime, "filter_chainrule", 1, "gsensPowerDiss", spGsensP, opt, runTime.timeName());
 }
-// gsensVol: same cascaded chain
 {
-    xp1 = gsenshVol;
-    fvScalarMatrix sens3Eqn(fvm::laplacian(xp1)-fvm::Sp(bFilter2,xp1)+gsenshVol*bFilter2);
+    volScalarField sensTmp3("sensTmp3", gsenshVol);
+    fvScalarMatrix sens3Eqn(fvm::laplacian(sensTmp3)-fvm::Sp(bFilter2,sensTmp3)+gsenshVol*bFilter2);
     SolverPerformance<scalar> spS3 = sens3Eqn.solve();
     logSolverStats(runTime, "filter_chainrule", 0, "gsensVStage2", spS3, opt, runTime.timeName());
-    gsenshVol = xp1;
+    gsenshVol = sensTmp3;
 }
 {
     fvScalarMatrix gvolEqn(fvm::laplacian(gsensVol)-fvm::Sp(b,gsensVol)+gsenshVol*b);
