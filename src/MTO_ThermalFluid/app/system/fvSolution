@@ -50,7 +50,7 @@ solvers
         relTol          0.05;
         maxIter         1500;
     }
-     "(xp|fsensMeanT|gsensVol|gsensPowerDiss)"
+     "(xp|xp1|fsensMeanT|gsensVol|gsensPowerDiss)"
     {
         solver          PCG;
         preconditioner  DIC;

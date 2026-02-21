@@ -61,13 +61,14 @@ if(opt>1)
   gsenshVol=gsenshVol*drho;
 }
 //***********************************//Cascaded PDE adjoints: dJ/dxp -> dJ/dxp1 -> dJ/dx
-// Stage 2 adjoint: (laplacian - bFilter2)*sens1 = -bFilter2*dJ/dxp
+// Reuse xp1 as temporary (must be in fvSolution solvers)
+// Stage 2 adjoint: (laplacian - bFilter2)*xp1 = -bFilter2*dJ/dxp
 {
-    volScalarField sensTmp1("sensTmp1", fsenshMeanT);
-    fvScalarMatrix sens1Eqn(fvm::laplacian(sensTmp1)-fvm::Sp(bFilter2,sensTmp1)+fsenshMeanT*bFilter2);
+    xp1 = fsenshMeanT;
+    fvScalarMatrix sens1Eqn(fvm::laplacian(xp1)-fvm::Sp(bFilter2,xp1)+fsenshMeanT*bFilter2);
     SolverPerformance<scalar> spS1 = sens1Eqn.solve();
     logSolverStats(runTime, "filter_chainrule", 0, "fsensStage2", spS1, opt, runTime.timeName());
-    fsenshMeanT = sensTmp1;
+    fsenshMeanT = xp1;
 }
 // Stage 1 adjoint: (laplacian - b)*fsensMeanT = -b*dJ/dxp1
 {
@@ -77,11 +78,11 @@ if(opt>1)
 }
 // gsensPowerDiss: same cascaded chain
 {
-    volScalarField sensTmp2("sensTmp2", gsenshPowerDiss);
-    fvScalarMatrix sens2Eqn(fvm::laplacian(sensTmp2)-fvm::Sp(bFilter2,sensTmp2)+gsenshPowerDiss*bFilter2);
+    xp1 = gsenshPowerDiss;
+    fvScalarMatrix sens2Eqn(fvm::laplacian(xp1)-fvm::Sp(bFilter2,xp1)+gsenshPowerDiss*bFilter2);
     SolverPerformance<scalar> spS2 = sens2Eqn.solve();
     logSolverStats(runTime, "filter_chainrule", 0, "gsensPStage2", spS2, opt, runTime.timeName());
-    gsenshPowerDiss = sensTmp2;
+    gsenshPowerDiss = xp1;
 }
 {
     fvScalarMatrix gsensEqn(fvm::laplacian(gsensPowerDiss)-fvm::Sp(b,gsensPowerDiss)+gsenshPowerDiss*b);
@@ -90,11 +91,11 @@ if(opt>1)
 }
 // gsensVol: same cascaded chain
 {
-    volScalarField sensTmp3("sensTmp3", gsenshVol);
-    fvScalarMatrix sens3Eqn(fvm::laplacian(sensTmp3)-fvm::Sp(bFilter2,sensTmp3)+gsenshVol*bFilter2);
+    xp1 = gsenshVol;
+    fvScalarMatrix sens3Eqn(fvm::laplacian(xp1)-fvm::Sp(bFilter2,xp1)+gsenshVol*bFilter2);
     SolverPerformance<scalar> spS3 = sens3Eqn.solve();
     logSolverStats(runTime, "filter_chainrule", 0, "gsensVStage2", spS3, opt, runTime.timeName());
-    gsenshVol = sensTmp3;
+    gsenshVol = xp1;
 }
 {
     fvScalarMatrix gvolEqn(fvm::laplacian(gsensVol)-fvm::Sp(b,gsensVol)+gsenshVol*b);
