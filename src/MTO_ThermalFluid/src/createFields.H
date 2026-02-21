@@ -23,9 +23,12 @@ scalar PowerDissMax(readScalar(optProperties.lookup("PowerDissMax")));
 scalar PowerDissRelax(readScalar(optProperties.lookup("PowerDissRelax")));
 scalar filterR(readScalar(optProperties.lookup("filterR")));
 scalar filterR2(optProperties.lookupOrDefault<scalar>("filterR2", filterR*0.7));  // cascaded stage 2
+Switch filterStage2Nonlinear(optProperties.lookupOrDefault<Switch>("filterStage2Nonlinear", Switch(true)));  // true = fW-mean gray suppression
+scalar filterPMean(optProperties.lookupOrDefault<scalar>("filterPMean", 4.0));  // fW-mean exponent p (p>1)
 dimensionedScalar b("b", dimensionSet(0,-2,0,0,0,0,0),1.0);//filter coeff stage 1 (PDE)
 dimensionedScalar bFilter2("bFilter2", dimensionSet(0,-2,0,0,0,0,0),1.0);//filter coeff stage 2 (cascaded)
 dimensionedScalar b1("b1", dimensionSet(0,2,-2,-2,0,0,0),1.0);
+Switch useCascadedFilter(optProperties.lookupOrDefault<Switch>("useCascadedFilter", Switch(false)));  // false = legacy (less gray)
 Switch solid_area(optProperties.lookup("solid_area"));
 Switch fluid_area(optProperties.lookup("fluid_area"));
 Switch test_area(optProperties.lookup("test_area"));

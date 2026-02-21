@@ -1,13 +1,27 @@
-//***********************************// Cascaded PDE filter (Lazarov & Wang 2016)
-// Two-stage Helmholtz filter for gray suppression in turbulent channel flows.
-// Stage 1: x -> xp1  |  Stage 2: xp1 -> xp  |  Heaviside: xp -> xh
+//***********************************// Cascaded PDE filter
+// Stage 1: x -> xp1 (linear Helmholtz). Stage 2: xp1 -> xp (linear or nonlinear fW-mean). Heaviside: xp -> xh
 //***********************************//Stage 1: PDE filter x -> xp1
 {
     fvScalarMatrix xp1Eqn(fvm::laplacian(xp1)-fvm::Sp(b,xp1)+x*b);
     SolverPerformance<scalar> spXp1 = xp1Eqn.solve();
     logSolverStats(runTime, "filter_x", 0, "xp1", spXp1, opt, runTime.timeName());
 }
-//***********************************//Stage 2: PDE filter xp1 -> xp
+//***********************************//Stage 2: xp1 -> xp (linear PDE or nonlinear fW-mean for gray suppression)
+if(filterStage2Nonlinear)
+{
+    // fW-mean: xp = (W*xp1^p)^{1/p}. PDE: solve (L-bFilter2)*tmp = bFilter2*xp1^p, then xp = tmp^{1/p}
+    const scalar pMean = Foam::max(filterPMean, 1.01);
+    const scalar xp1Floor = 1e-12;
+    volScalarField xp1Pow("xp1Pow", Foam::pow(Foam::max(xp1, scalar(xp1Floor)), pMean));
+    {
+        fvScalarMatrix xpRawEqn(fvm::laplacian(xp)-fvm::Sp(bFilter2,xp)+xp1Pow*bFilter2);
+        SolverPerformance<scalar> spXpR = xpRawEqn.solve();
+        logSolverStats(runTime, "filter_x", 1, "xp_fWmean", spXpR, opt, runTime.timeName());
+    }
+    xp.primitiveFieldRef() = Foam::pow(Foam::max(xp.primitiveField(), xp1Floor), 1.0/pMean);
+    xp.correctBoundaryConditions();
+}
+else
 {
     fvScalarMatrix xpEqn(fvm::laplacian(xp)-fvm::Sp(bFilter2,xp)+xp1*bFilter2);
     SolverPerformance<scalar> spXp = xpEqn.solve();

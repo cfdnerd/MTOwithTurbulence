@@ -61,14 +61,27 @@ if(opt>1)
   gsenshVol=gsenshVol*drho;
 }
 //***********************************//Cascaded PDE adjoints: dJ/dxp -> dJ/dxp1 -> dJ/dx
-// Temporaries must match source dimensions (xp1 is dimensionless; sens fields are not)
+// Stage 2: linear PDE uses fsenshMeanT as RHS; nonlinear fW-mean uses modified RHS and chain rule
 // sensTmp1/2/3 must be in fvSolution solvers
 {
     volScalarField sensTmp1("sensTmp1", fsenshMeanT);
-    fvScalarMatrix sens1Eqn(fvm::laplacian(sensTmp1)-fvm::Sp(bFilter2,sensTmp1)+fsenshMeanT*bFilter2);
-    SolverPerformance<scalar> spS1 = sens1Eqn.solve();
-    logSolverStats(runTime, "filter_chainrule", 0, "fsensStage2", spS1, opt, runTime.timeName());
-    fsenshMeanT = sensTmp1;
+    if(filterStage2Nonlinear)
+    {
+        const scalar pMean = Foam::max(filterPMean, 1.01);
+        const scalar xpFloor = 1e-12;
+        volScalarField dJdxpRaw("dJdxpRaw", fsenshMeanT * (1.0/pMean) * Foam::pow(Foam::max(xp, scalar(xpFloor)), 1.0 - pMean));
+        fvScalarMatrix sens1Eqn(fvm::laplacian(sensTmp1)-fvm::Sp(bFilter2,sensTmp1)+dJdxpRaw*bFilter2);
+        SolverPerformance<scalar> spS1 = sens1Eqn.solve();
+        logSolverStats(runTime, "filter_chainrule", 0, "fsensStage2_fW", spS1, opt, runTime.timeName());
+        fsenshMeanT = sensTmp1 * bFilter2 * pMean * Foam::pow(Foam::max(xp1, scalar(xpFloor)), pMean - 1.0);
+    }
+    else
+    {
+        fvScalarMatrix sens1Eqn(fvm::laplacian(sensTmp1)-fvm::Sp(bFilter2,sensTmp1)+fsenshMeanT*bFilter2);
+        SolverPerformance<scalar> spS1 = sens1Eqn.solve();
+        logSolverStats(runTime, "filter_chainrule", 0, "fsensStage2", spS1, opt, runTime.timeName());
+        fsenshMeanT = sensTmp1;
+    }
 }
 {
     fvScalarMatrix fsensEqn(fvm::laplacian(fsensMeanT)-fvm::Sp(b,fsensMeanT)+fsenshMeanT*b);
@@ -77,10 +90,23 @@ if(opt>1)
 }
 {
     volScalarField sensTmp2("sensTmp2", gsenshPowerDiss);
-    fvScalarMatrix sens2Eqn(fvm::laplacian(sensTmp2)-fvm::Sp(bFilter2,sensTmp2)+gsenshPowerDiss*bFilter2);
-    SolverPerformance<scalar> spS2 = sens2Eqn.solve();
-    logSolverStats(runTime, "filter_chainrule", 0, "gsensPStage2", spS2, opt, runTime.timeName());
-    gsenshPowerDiss = sensTmp2;
+    if(filterStage2Nonlinear)
+    {
+        const scalar pMean = Foam::max(filterPMean, 1.01);
+        const scalar xpFloor = 1e-12;
+        volScalarField dJdxpRaw("dJdxpRaw2", gsenshPowerDiss * (1.0/pMean) * Foam::pow(Foam::max(xp, scalar(xpFloor)), 1.0 - pMean));
+        fvScalarMatrix sens2Eqn(fvm::laplacian(sensTmp2)-fvm::Sp(bFilter2,sensTmp2)+dJdxpRaw*bFilter2);
+        SolverPerformance<scalar> spS2 = sens2Eqn.solve();
+        logSolverStats(runTime, "filter_chainrule", 0, "gsensPStage2_fW", spS2, opt, runTime.timeName());
+        gsenshPowerDiss = sensTmp2 * bFilter2 * pMean * Foam::pow(Foam::max(xp1, scalar(xpFloor)), pMean - 1.0);
+    }
+    else
+    {
+        fvScalarMatrix sens2Eqn(fvm::laplacian(sensTmp2)-fvm::Sp(bFilter2,sensTmp2)+gsenshPowerDiss*bFilter2);
+        SolverPerformance<scalar> spS2 = sens2Eqn.solve();
+        logSolverStats(runTime, "filter_chainrule", 0, "gsensPStage2", spS2, opt, runTime.timeName());
+        gsenshPowerDiss = sensTmp2;
+    }
 }
 {
     fvScalarMatrix gsensEqn(fvm::laplacian(gsensPowerDiss)-fvm::Sp(b,gsensPowerDiss)+gsenshPowerDiss*b);
@@ -89,10 +115,23 @@ if(opt>1)
 }
 {
     volScalarField sensTmp3("sensTmp3", gsenshVol);
-    fvScalarMatrix sens3Eqn(fvm::laplacian(sensTmp3)-fvm::Sp(bFilter2,sensTmp3)+gsenshVol*bFilter2);
-    SolverPerformance<scalar> spS3 = sens3Eqn.solve();
-    logSolverStats(runTime, "filter_chainrule", 0, "gsensVStage2", spS3, opt, runTime.timeName());
-    gsenshVol = sensTmp3;
+    if(filterStage2Nonlinear)
+    {
+        const scalar pMean = Foam::max(filterPMean, 1.01);
+        const scalar xpFloor = 1e-12;
+        volScalarField dJdxpRaw("dJdxpRaw3", gsenshVol * (1.0/pMean) * Foam::pow(Foam::max(xp, scalar(xpFloor)), 1.0 - pMean));
+        fvScalarMatrix sens3Eqn(fvm::laplacian(sensTmp3)-fvm::Sp(bFilter2,sensTmp3)+dJdxpRaw*bFilter2);
+        SolverPerformance<scalar> spS3 = sens3Eqn.solve();
+        logSolverStats(runTime, "filter_chainrule", 0, "gsensVStage2_fW", spS3, opt, runTime.timeName());
+        gsenshVol = sensTmp3 * bFilter2 * pMean * Foam::pow(Foam::max(xp1, scalar(xpFloor)), pMean - 1.0);
+    }
+    else
+    {
+        fvScalarMatrix sens3Eqn(fvm::laplacian(sensTmp3)-fvm::Sp(bFilter2,sensTmp3)+gsenshVol*bFilter2);
+        SolverPerformance<scalar> spS3 = sens3Eqn.solve();
+        logSolverStats(runTime, "filter_chainrule", 0, "gsensVStage2", spS3, opt, runTime.timeName());
+        gsenshVol = sensTmp3;
+    }
 }
 {
     fvScalarMatrix gvolEqn(fvm::laplacian(gsensVol)-fvm::Sp(b,gsensVol)+gsenshVol*b);

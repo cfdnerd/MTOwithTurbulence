@@ -22,7 +22,14 @@ if (turbSensDamp > 0 && mesh.thisDb().foundObject<volScalarField>("k") && mesh.t
     }
 }
 
-#include "filter_chainrule.H"
+if(useCascadedFilter)
+{
+    #include "filter_chainrule.H"
+}
+else
+{
+    #include "filter_chainrule_legacy.H"
+}
 
 gx[0]=(PowerDiss/Foam::max(PowerDissRelax-opt*0.2,PowerDissMax)-1.0);
 gx[1]=V;
@@ -94,4 +101,11 @@ if(test_area)
     forAll(cells_test, i) { x[cells_test[i]] = 1.0; }
 }
 
-#include "filter_x.H"
+if(useCascadedFilter)
+{
+    #include "filter_x.H"
+}
+else
+{
+    #include "filter_x_legacy.H"
+}

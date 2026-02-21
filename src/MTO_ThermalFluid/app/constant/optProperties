@@ -16,15 +16,18 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // ========================= Optimization / MMA ========================= //
-// 0/1 sharpening: movlim, filterR affect design evolution; Heaviside del in filter_x.H (0.4*opt, cap 200)
+// useCascadedFilter: no = legacy single-stage; yes = cascaded (use with filterStage2Nonlinear for gray suppression)
+useCascadedFilter   yes;       // yes + filterStage2Nonlinear yes = cascaded fW-mean (gray suppression)
 raa0                1e-5;      // MMA regularization parameter
 voluse              0.4;       // Target initial/constraint volume fraction
 mma_init            0.3;       // MMA asymptote initialization factor
 mma_dec             0.7;       // MMA asymptote decrease factor
 mma_inc             1.2;       // MMA asymptote increase factor
-movlim              0.3;       // MMA move limit (0.3 = tighter; smoother, less noisy evolution)
-filterR             3.2;       // Cascaded stage 1: Helmholtz/PDE filter radius (larger = smoother, more organic)
-filterR2            2.4;       // Cascaded stage 2: second filter radius (larger = smoother boundaries, less noise)
+movlim              0.3;       // MMA move limit (0.3 = smoother evolution; does not cause gray)
+filterR             2.2;       // Stage 1 filter radius (larger = smoother but MORE gray; keep moderate)
+filterR2            1.6;       // Stage 2 radius (linear mode); used for PDE kernel in nonlinear mode
+filterStage2Nonlinear yes;     // yes = fW-mean power stage (gray suppression); no = linear PDE (more gray)
+filterPMean         4;         // fW-mean exponent p (p>1 sharpens; 4–8 typical; 2=mild, 16=strong)
 
 // ========================= Objective / Constraint ===================== //
 PowerDiss0          1e-8;     // Reference dissipation for normalization
