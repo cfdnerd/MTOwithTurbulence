@@ -70,6 +70,7 @@ for(i=0;i<maxAdjUaIter;i++)
   const scalar volTot = Foam::max(gSum(mesh.V()), scalar(1e-30));
   const scalar hChar = Foam::pow(volTot/nCell, 1.0/3.0);
   const scalar convScale = Foam::max(UmaxStage*UmaxStage/Foam::max(hChar, 1e-8), 1e-8);
+  MTOdiag::logMetric(runTime, opt, uaStage, "uaTrace_afterScalars", 1.0);
   volVectorField adjointTransposeConvectiona((fvc::grad(U) & Ua));
   forAll(adjointTransposeConvectiona, cellI)
   {
@@ -79,20 +80,24 @@ for(i=0;i<maxAdjUaIter;i++)
           cv = vector::zero;
       }
   }
+  MTOdiag::logMetric(runTime, opt, uaStage, "uaTrace_afterAdjTranspConv", 1.0);
 
   volVectorField turbSourceUa(fvc::grad(pa) * scalar(0));  // zero by default
   if (mesh.thisDb().foundObject<volScalarField>("k") && mesh.thisDb().foundObject<volScalarField>("omega"))
   {
+      MTOdiag::logMetric(runTime, opt, uaStage, "uaTrace_enterKOmegaBlock", 1.0);
       const volScalarField& ka = mesh.thisDb().lookupObject<volScalarField>("ka");
       const volScalarField& omegaa = mesh.thisDb().lookupObject<volScalarField>("omegaa");
       const volScalarField& k = mesh.thisDb().lookupObject<volScalarField>("k");
       const volScalarField& omega = mesh.thisDb().lookupObject<volScalarField>("omega");
       const volScalarField& nut = turbulence->nut();
+      MTOdiag::logMetric(runTime, opt, uaStage, "uaTrace_afterNutLookup", 1.0);
       const volScalarField nutSafe(max(nut, dimensionedScalar("zero", nut.dimensions(), 0.0)));
       const dimensionedScalar gamma1("gamma1", dimless, 5.0/9.0);
       // Adaptive denominator floors to avoid division-driven source blowup
       const scalar kAvg = Foam::max(gAverage(k.primitiveField()), 1e-12);
       const scalar omegaAvg = Foam::max(gAverage(omega.primitiveField()), 1e-12);
+      MTOdiag::logMetric(runTime, opt, uaStage, "uaTrace_afterGAvgKO", 1.0);
       const scalar kFloorVal = Foam::max(1e-3*kAvg, 1e-8);
       const scalar omegaFloorVal = Foam::max(1e-3*omegaAvg, 1e-8);
       const dimensionedScalar kSmall("kSmall", dimArea/dimTime/dimTime, kFloorVal);
@@ -111,11 +116,13 @@ for(i=0;i<maxAdjUaIter;i++)
           scalar& ov = omegaDenom[cellI];
           if (!std::isfinite(ov) || ov < denomFloor) { ov = Foam::max(omegaFloorVal, denomFloor); }
       }
+      MTOdiag::logMetric(runTime, opt, uaStage, "uaTrace_afterDenomFloor", 1.0);
       // Adjoint momentum source: scale to [0 1 -2]. ka-term: div/(k); omegaa-term: div/(omega)*nut
       // Use nutSafe to avoid FPE when nut is negative (ill-conditioned topology/porous regions)
       turbSourceUa =
           -fvc::div(ka*2*nutSafe*twoSymm(fvc::grad(U)))/kDenom
           -nutSafe*fvc::div(omegaa*2*gamma1*twoSymm(fvc::grad(U)))/omegaDenom;
+      MTOdiag::logMetric(runTime, opt, uaStage, "uaTrace_afterTurbSourceAssign", 1.0);
       turbSourceUa *= betaAdj;
       turbSourceUa *= passGain;
 
