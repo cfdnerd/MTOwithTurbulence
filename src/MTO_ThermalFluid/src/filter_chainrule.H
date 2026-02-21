@@ -1,6 +1,34 @@
 fsenshMeanT=fsenshMeanT/gMax(mag(fsenshMeanT.primitiveField()));
 gsenshPowerDiss=gsenshPowerDiss/gMax(mag(gsenshPowerDiss.primitiveField()));
 gsenshVol.primitiveFieldRef() = 1.0;
+// Zero sensitivities in fixed non-design zones so MMA does not update them
+if(solid_area)
+{
+   forAll(cells_solid, i)
+   {
+      fsenshMeanT[cells_solid[i]] = 0;
+      gsenshPowerDiss[cells_solid[i]] = 0;
+      gsenshVol[cells_solid[i]] = 0;
+   }
+}
+if(fluid_area)
+{
+   forAll(cells_fluid, i)
+   {
+      fsenshMeanT[cells_fluid[i]] = 0;
+      gsenshPowerDiss[cells_fluid[i]] = 0;
+      gsenshVol[cells_fluid[i]] = 0;
+   }
+}
+if(test_area)
+{
+   forAll(cells_test, i)
+   {
+      fsenshMeanT[cells_test[i]] = 0;
+      gsenshPowerDiss[cells_test[i]] = 0;
+      gsenshVol[cells_test[i]] = 0;
+   }
+}
 //***********************************//Heaviside_filter
 if(opt>1)
 {
