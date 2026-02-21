@@ -16,13 +16,14 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // ========================= Optimization / MMA ========================= //
+// 0/1 sharpening: movlim, filterR affect design evolution; Heaviside del in filter_x.H (0.35*opt, cap 150)
 raa0                1e-5;      // MMA regularization parameter
 voluse              0.4;       // Target initial/constraint volume fraction
 mma_init            0.3;       // MMA asymptote initialization factor
 mma_dec             0.7;       // MMA asymptote decrease factor
 mma_inc             1.2;       // MMA asymptote increase factor
-movlim              0.3;       // MMA move limit per optimization step
-filterR             2.5;       // Helmholtz/PDE filter radius (in cell-length units)
+movlim              0.4;       // MMA move limit (0.4 per original MTO; larger = faster 0/1 convergence)
+filterR             2.2;       // Helmholtz/PDE filter radius (slightly smaller = sharper features)
 
 // ========================= Objective / Constraint ===================== //
 PowerDiss0          1e-12;     // Reference dissipation for normalization

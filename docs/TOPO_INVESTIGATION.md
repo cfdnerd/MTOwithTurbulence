@@ -37,7 +37,7 @@ The **xh** field (projected density used in physics) is produced by this pipelin
 |-------|------|------|
 | **Initialization** | `createFields.H` | x, xp, xh = voluse (0.4). Sets x=0, xh=0 in solid_area; x=1, xh=1 in fluid_area; x=1, xh=1 in test_area when test_area=yes |
 | **Design update** | `sensitivity.H` | Raw sensitivities → filter_chainrule → dfdx, dgdx → MMA updates x → restore x in fixed zones → **filter_x.H** computes new xp and xh |
-| **filter_x.H** | `filter_x.H` | PDE filter: x→xp. Heaviside: xp→xh (eta5 from volume-preserving bisection, del=min(0.2*opt,100)) |
+| **filter_x.H** | `filter_x.H` | PDE filter: x→xp. Heaviside: xp→xh (eta5 from volume-preserving bisection, del=min(0.35*opt,150) for sharper 0/1) |
 | **Fixed-zone overlay** | `update.H` | At start of each iteration: xh[solid]=0, xh[fluid]=1. **Does NOT set xh[test]=1** when test_area=yes (see §3.1) |
 
 ### 1.2 Optimization Loop Order (MTO_ThermalFluid.C)
