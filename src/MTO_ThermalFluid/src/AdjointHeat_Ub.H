@@ -36,7 +36,7 @@ forAll(adjointTransposeConvectionb, cellI)
     }
 }
 
-const volScalarField nuEffUb(max(turbulence->nuEff(), dimensionedScalar("nuMin", turbulence->nuEff().dimensions(), 1e-12)));
+const volScalarField nuEffUb(max(turbulence->nuEff(), dimensionedScalar("nuMin", turbulence->nuEff()().dimensions(), 1e-12)));
 tmp<fvVectorMatrix> tUbEqn
 (
     fvm::div(-phi, Ub)
@@ -56,7 +56,7 @@ fvOptions.constrain(UbEqn);
 
 SolverPerformance<vector> spUb = solve(UbEqn == -fvc::grad(pb));
 logSolverStats(runTime, "AdjointHeat_Ub", i, "Ub", spUb, opt, runTime.timeName());
-if (spUb.singular() || !std::isfinite(spUb.initialResidual()) || !std::isfinite(spUb.finalResidual()))
+if (spUb.singular() || !std::isfinite(mag(spUb.initialResidual())) || !std::isfinite(mag(spUb.finalResidual())))
 {
     Info<< "Warning: Ub solve singular or non-finite; restoring last safe Ub/pb state." << endl;
     Ub = UbSafe;

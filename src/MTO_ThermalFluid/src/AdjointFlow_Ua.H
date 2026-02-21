@@ -162,7 +162,7 @@ for(i=0;i<maxAdjUaIter;i++)
   }
 
   // Floor nuEff to avoid singular/indefinite matrix from negative nut in porous regions
-  const volScalarField nuEffUa(max(turbulence->nuEff(), dimensionedScalar("nuMin", turbulence->nuEff().dimensions(), 1e-12)));
+  const volScalarField nuEffUa(max(turbulence->nuEff(), dimensionedScalar("nuMin", turbulence->nuEff()().dimensions(), 1e-12)));
   tmp<fvVectorMatrix> tUaEqn
   (
       fvm::div(-phi, Ua)
@@ -204,7 +204,7 @@ for(i=0;i<maxAdjUaIter;i++)
   MTOdiag::logMetric(runTime, opt, uaStage, "uaRHS_usedMax", uaRhsUsedMax);
   SolverPerformance<vector> spUa = solve(UaEqn == uaRHS);
   logSolverStats(runTime, "AdjointFlow_Ua", i, "Ua", spUa, opt, runTime.timeName());
-  if (spUa.singular() || !std::isfinite(spUa.initialResidual()) || !std::isfinite(spUa.finalResidual()))
+  if (spUa.singular() || !std::isfinite(mag(spUa.initialResidual())) || !std::isfinite(mag(spUa.finalResidual())))
   {
       Info<< "Warning: Ua solve singular or non-finite; restoring last safe Ua/pa state." << endl;
       Ua = UaSafe;
