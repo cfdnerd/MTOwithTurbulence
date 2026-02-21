@@ -134,7 +134,9 @@ for(i=0;i<maxAdjUaIter;i++)
           : srcCapPhys;
       const scalar srcMaxAbs = Foam::min(srcCapPhys, srcCapHist);
       const scalar localCapCoeff = Foam::max(adjUaLocalCapCoeff, scalar(0));
+      const scalar hCharSafe = (std::isfinite(hChar) && hChar > 0) ? Foam::max(hChar, 1e-8) : 1e-8;
       scalar srcUsedMax = 0.0;
+      MTOdiag::logMetric(runTime, opt, uaStage, "uaTrace_beforeCapLoop", 1.0);
       forAll(turbSourceUa, cellI)
       {
           vector& sv = turbSourceUa[cellI];
@@ -145,14 +147,22 @@ for(i=0;i<maxAdjUaIter;i++)
           else
           {
               const scalar sm = mag(sv);
-              const scalar Um = mag(U[cellI]);
-              const scalar srcCapLocal = Foam::max(localCapCoeff*Um*Um/Foam::max(hChar, 1e-8), 1e-2);
+              const scalar Um = Foam::min(mag(U[cellI]), 1e30);  // avoid Um*Um overflow
+              const scalar UmSq = Um*Um;
+              const scalar denom = Foam::max(hCharSafe, 1e-8);
+              const scalar srcCapLocal = Foam::max
+              (
+                  (std::isfinite(UmSq) ? localCapCoeff*UmSq/denom : 1e-2),
+                  1e-2
+              );
               const scalar srcCellCap = Foam::min(srcMaxAbs, srcCapLocal);
-              if (sm > srcCellCap)
+              if (std::isfinite(sm) && sm > srcCellCap)
               {
-                  sv *= (srcCellCap/(sm + VSMALL));
+                  const scalar scale = srcCellCap/(sm + VSMALL);
+                  if (std::isfinite(scale)) { sv *= scale; }
               }
-              srcUsedMax = Foam::max(srcUsedMax, mag(sv));
+              const scalar svMag = mag(sv);
+              srcUsedMax = Foam::max(srcUsedMax, std::isfinite(svMag) ? svMag : 0.0);
           }
       }
       prevTurbSourceUaMax = srcUsedMax;
