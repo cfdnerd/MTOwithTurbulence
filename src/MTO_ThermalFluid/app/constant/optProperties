@@ -27,7 +27,7 @@ filterR             3.2;       // Cascaded stage 1: Helmholtz/PDE filter radius 
 filterR2            2.4;       // Cascaded stage 2: second filter radius (larger = smoother boundaries, less noise)
 
 // ========================= Objective / Constraint ===================== //
-PowerDiss0          1e-9;     // Reference dissipation for normalization
+PowerDiss0          1e-8;     // Reference dissipation for normalization
 PowerDissMax        10;        // Max allowed power dissipation constraint
 PowerDissRelax      25;        // Dissipation constraint relaxation window
 GeoDim              2;         // Geometric dimension flag
