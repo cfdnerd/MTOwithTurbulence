@@ -64,8 +64,9 @@ label adjHeatRampStart(optProperties.lookupOrDefault<label>("adjHeatRampStart", 
 label adjHeatRampEnd(optProperties.lookupOrDefault<label>("adjHeatRampEnd", 120));
 scalar adjUaPassDecay(optProperties.lookupOrDefault<scalar>("adjUaPassDecay", 0.35));
 scalar adjUaPassMinGain(optProperties.lookupOrDefault<scalar>("adjUaPassMinGain", 0.10));
-scalar adjUaLocalCapCoeff(optProperties.lookupOrDefault<scalar>("adjUaLocalCapCoeff", 200.0));
-scalar adjUaRhsCapCoeff(optProperties.lookupOrDefault<scalar>("adjUaRhsCapCoeff", 200.0));
+scalar adjUaLocalCapCoeff(optProperties.lookupOrDefault<scalar>("adjUaLocalCapCoeff", 2000.0));
+scalar adjUaRhsCapCoeff(optProperties.lookupOrDefault<scalar>("adjUaRhsCapCoeff", 500.0));
+scalar adjUbPhiHbyAbCapFloor(optProperties.lookupOrDefault<scalar>("adjUbPhiHbyAbCapFloor", 1e-7));
 scalar adjUaAllPassTbMax(optProperties.lookupOrDefault<scalar>("adjUaAllPassTbMax", 1e74));
 scalar adjUaHigherPassTbMax(optProperties.lookupOrDefault<scalar>("adjUaHigherPassTbMax", 1e60));
 scalar tbPreSolveReset(optProperties.lookupOrDefault<scalar>("tbPreSolveReset", 1e6));

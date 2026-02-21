@@ -30,6 +30,10 @@ double denomSq1 = Foam::max(filterR*len/3.464, 1e-30);
 double denomSq2 = Foam::max(filterR2*len/3.464, 1e-30);
 b.value()=1.0/(denomSq1*denomSq1);
 bFilter2.value()=1.0/(denomSq2*denomSq2);
+
+// Write mesh/filter estimates at top of solver_status.log (master only)
+writeMeshFilterHeader(runTime, mesh, area, N, len, filterR, filterR2, GeoDim, nu, U);
+
 //***********************************//MMA
 int m=2;//number of constraint
 MMA mma(n,m);

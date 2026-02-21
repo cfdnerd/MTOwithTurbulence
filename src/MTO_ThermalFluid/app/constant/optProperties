@@ -89,9 +89,9 @@ adjPseudoInvDtTb    100000;    // Pseudo-transient inverse dt for Tb (strong dia
 adjPseudoInvDtTurb  100;       // Pseudo-transient inverse dt for ka/omegaa equations
 
 tbPreSolveReset     1e5;       // Reset Tb to zero before solve if max|Tb| exceeds this
-tbHardCapMin        1e4;       // Lower bound on Tb hard cap floor (higher = less clipping, less gray)
-tbHardCapMax        1e5;      // Upper bound on Tb hard cap (keeps Tb from exploding)
-tbRhsCapMax         1e10;      // Max |RHS source| per cell; scale down if exceeded (avoids FPE)
+tbHardCapMin        1e5;       // Lower bound on Tb hard cap (higher = less clipping, less gray)
+tbHardCapMax        1e6;       // Upper bound on Tb hard cap (keeps Tb from exploding)
+tbRhsCapMax         1e12;      // Max |RHS source| per cell; scale down if exceeded (avoids FPE)
 adjTbGradTgradTbCapMax 1e10;   // Cap |grad(T)·grad(Tb)| in ka/omegaa thermal source (objFunction=1)
 
 // ========================================================================== //
@@ -105,14 +105,15 @@ adjTurbLagEvery     2;         // Solve turbulence adjoint every N opt iteration
 adjHeatBetaMin      0.1;       // Initial heat-adjoint continuation factor for Ub source
 adjHeatRampStart    1;         // Iteration to start heat-adjoint beta ramp
 adjHeatRampEnd      220;       // Iteration to finish heat-adjoint beta ramp
+adjUbPhiHbyAbCapFloor 1e-7;    // phiHbyAb cap floor (higher = less Ub suppression in passes 1-2, less gray)
 
 // ========================================================================== //
 // 10. ADJOINT: Ua ROBUSTNESS                                                 //
 // ========================================================================== //
 adjUaPassDecay      0.35;      // Extra Ua-source damping factor applied per adjoint pass (>0)
 adjUaPassMinGain    0.10;      // Minimum Ua-source gain floor for later adjoint passes
-adjUaLocalCapCoeff  200;       // Local Ua-source cap coefficient on U^2/L convective scale
-adjUaRhsCapCoeff    200;       // Global Ua RHS cap coefficient on U^2/L convective scale
+adjUaLocalCapCoeff  2000;      // Turb source cap coeff on U^2/L (higher = less suppression, less gray)
+adjUaRhsCapCoeff    500;       // Ua RHS cap coeff on U^2/L (higher = less suppression, less gray)
 adjUaAllPassTbMax   1e6;       // Skip Ua update (any pass) if |Tb| exceeds this (decouple when Tb bad)
 adjUaHigherPassTbMax 1e5;      // Skip higher-pass Ua update if |Tb| exceeds this trust threshold
 

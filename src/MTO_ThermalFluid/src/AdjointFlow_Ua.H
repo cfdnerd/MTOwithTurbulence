@@ -126,14 +126,13 @@ for(i=0;i<maxAdjUaIter;i++)
       turbSourceUa *= betaAdj;
       turbSourceUa *= passGain;
 
-      // Robust bound independent of pa to avoid source-cap feedback blow-up:
-      // cap by physical convective scale U^2/L and by historical growth.
-      const scalar srcCapPhys = Foam::max(1e3*convScale, 1e-2);
+      // Robust bound: cap by convective scale U^2/L (adjUaLocalCapCoeff) and historical growth.
+      const scalar localCapCoeff = Foam::max(adjUaLocalCapCoeff, scalar(1e3));
+      const scalar srcCapPhys = Foam::max(localCapCoeff*convScale, 1e-2);
       const scalar srcCapHist = (prevTurbSourceUaMax > 0.0)
           ? Foam::max(5.0*prevTurbSourceUaMax, 1e-2)
           : srcCapPhys;
       const scalar srcMaxAbs = Foam::min(srcCapPhys, srcCapHist);
-      const scalar localCapCoeff = Foam::max(adjUaLocalCapCoeff, scalar(0));  // for logging only
       scalar srcUsedMax = 0.0;
       MTOdiag::logMetric(runTime, opt, uaStage, "uaTrace_beforeCapLoop", 1.0);
       // Sanitize: two-pass to avoid FPE from min/max on NaN/Inf (crash-fix opt313)
