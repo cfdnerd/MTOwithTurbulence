@@ -1,5 +1,16 @@
-fsenshMeanT=fsenshMeanT/gMax(mag(fsenshMeanT.primitiveField()));
-gsenshPowerDiss=gsenshPowerDiss/gMax(mag(gsenshPowerDiss.primitiveField()));
+// Normalize by max over DESIGN DOMAIN only; fixed-zone sensitivities can be orders
+// of magnitude larger (e.g. inlet/outlet) and would otherwise squash design updates
+{
+    volScalarField tmpF(mag(fsenshMeanT));
+    volScalarField tmpG(mag(gsenshPowerDiss));
+    if(solid_area) { forAll(cells_solid,i) { tmpF[cells_solid[i]]=0; tmpG[cells_solid[i]]=0; } }
+    if(fluid_area) { forAll(cells_fluid,i) { tmpF[cells_fluid[i]]=0; tmpG[cells_fluid[i]]=0; } }
+    if(test_area)  { forAll(cells_test,i)  { tmpF[cells_test[i]]=0;  tmpG[cells_test[i]]=0;  } }
+    scalar maxF = Foam::max(gMax(tmpF), VSMALL);
+    scalar maxG = Foam::max(gMax(tmpG), VSMALL);
+    fsenshMeanT /= maxF;
+    gsenshPowerDiss /= maxG;
+}
 gsenshVol.primitiveFieldRef() = 1.0;
 // Zero sensitivities in fixed non-design zones so MMA does not update them
 if(solid_area)

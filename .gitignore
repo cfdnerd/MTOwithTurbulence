@@ -2,3 +2,4 @@ src/MTO_ThermalFluid/src/Make/linux64GccDPInt32Opt/
 **/processor*/
 **/polyMesh/
 solver_diagnologs/
+fieldScreenshots/
