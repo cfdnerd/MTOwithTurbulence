@@ -6,8 +6,10 @@
     if(solid_area) { forAll(cells_solid,i) { tmpF[cells_solid[i]]=0; tmpG[cells_solid[i]]=0; } }
     if(fluid_area) { forAll(cells_fluid,i) { tmpF[cells_fluid[i]]=0; tmpG[cells_fluid[i]]=0; } }
     if(test_area)  { forAll(cells_test,i)  { tmpF[cells_test[i]]=0;  tmpG[cells_test[i]]=0;  } }
-    scalar maxF = Foam::max(gMax(tmpF), VSMALL);
-    scalar maxG = Foam::max(gMax(tmpG), VSMALL);
+    // Use 1e-12 floor (not VSMALL) to avoid overflow when design-domain sens are near zero
+    const scalar sensFloor = 1e-12;
+    scalar maxF = Foam::max(gMax(tmpF), sensFloor);
+    scalar maxG = Foam::max(gMax(tmpG), sensFloor);
     fsenshMeanT /= maxF;
     gsenshPowerDiss /= maxG;
 }

@@ -15,6 +15,13 @@ if(fluid_area)
       xh[cells_fluid[i]]=1.0;
    }
 }
+if(test_area)
+{
+   forAll(cells_test, i)
+   {
+      xh[cells_test[i]]=1.0;
+   }
+}
 xh.correctBoundaryConditions();
 xh = Foam::max(0.0, Foam::min(1.0, xh));
 xh.correctBoundaryConditions();

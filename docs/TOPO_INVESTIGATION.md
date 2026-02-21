@@ -4,6 +4,25 @@
 
 ---
 
+## 0. Original MTO vs Fork: Key Differences
+
+**Original MTO** (MTopOpt/MTO, new_2022.12.15):
+- `filter_chainrule.H`: Global `gMax(mag(...))` normalization; **no** zeroing of fixed zones
+- `sensitivity.H`: Direct `x[i]=xmma[i]`; **no** restore of x in solid/fluid/test zones
+- No solid_area/fluid_area/test_area fixed-zone logic in filter or sensitivity
+
+**Our fork (MTOwithTurbulence)** after stability tuning:
+- `filter_chainrule.H`: **Design-domain-only** normalization; **zero** sensitivities in solid/fluid/test
+- `sensitivity.H`: MMA update + **restore** x in fixed zones + filter_x
+- **update.H**: Overwrite xh in solid_area and fluid_area; now also test_area when test_area=yes
+
+**Critical xh fix** (preserves stability):
+1. **Design-domain normalization**: Fixed zones (inlet/outlet) have much larger raw sensitivities; global gMax squashed design-domain gradients. Normalize by max over design domain only.
+2. **Sensitivity floor 1e-12**: Avoid overflow when design-domain sensitivities are near zero (was VSMALL).
+3. **xh[test]=1 in update.H**: When test_area=yes, enforce xh=1 in test zone for consistency with solid/fluid overlays.
+
+---
+
 ## 1. Framework Responsible for xh Distribution
 
 The **xh** field (projected density used in physics) is produced by this pipeline:
@@ -124,3 +143,24 @@ The framework that produces distinct solid and fluid regions in the design domai
 3. **filter_x.H** – Converts x to xh via PDE filter and volume-preserving Heaviside.  
 
 Correct, properly scaled sensitivities (dfdx, dgdx) in the design domain are essential. Anything that weakens or corrupts them (Tb reset, Ua skip, primal–adjoint mismatch) can lead to a persistently gray design.
+
+---
+
+## 7. Preservation of Stability (Not Touched)
+
+To fix xh design without breaking numerical stability and convergence, the following were **explicitly left unchanged**:
+
+| Component | Role | Do not modify |
+|-----------|------|---------------|
+| **AdjointFlow_Ua.H** | Ua adjoint, turbSourceUa cap, Tb trust gates | All caps, skip logic, diagonal floors |
+| **AdjointHeat_Tb.H** | Tb solve, tbPreSolveReset, tbRhsCapMax | Reset and RHS cap thresholds |
+| **AdjointHeat_Ub.H** | Ub adjoint, UbHardCap | Cap logic |
+| **update.H** | xhSafe floor, alphaCap, alphaMax ramp, alphaMaxMesh | All stability ramps and caps |
+| **sensitivity.H** | MMA backtracking, x restore in fixed zones | Backtracking and restore logic |
+| **optProperties** | adjUaAllPassTbMax, tbPreSolveReset, etc. | Adjoint tuning parameters |
+
+The xh-related changes (design-domain normalization, sens floor, xh[test]=1) affect only:
+- **filter_chainrule.H**: Sensitivity scaling before MMA
+- **update.H**: Fixed-zone xh overlay (adds test_area to match solid/fluid)
+
+No changes were made to primal/adjoint equations, solver caps, or optimization parameters.
