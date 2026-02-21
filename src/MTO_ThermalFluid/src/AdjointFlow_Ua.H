@@ -97,8 +97,20 @@ for(i=0;i<maxAdjUaIter;i++)
       const scalar omegaFloorVal = Foam::max(1e-3*omegaAvg, 1e-8);
       const dimensionedScalar kSmall("kSmall", dimArea/dimTime/dimTime, kFloorVal);
       const dimensionedScalar omegaSmall("omegaSmall", dimless/dimTime, omegaFloorVal);
-      const volScalarField kDenom(max(k, kSmall));
-      const volScalarField omegaDenom(max(omega, omegaSmall));
+      volScalarField kDenom(max(k, kSmall));
+      volScalarField omegaDenom(max(omega, omegaSmall));
+      // Extra safeguard: ensure no division-by-zero from non-finite or near-zero on any rank
+      const scalar denomFloor = 1e-12;
+      forAll(kDenom, cellI)
+      {
+          scalar& kv = kDenom[cellI];
+          if (!std::isfinite(kv) || kv < denomFloor) { kv = Foam::max(kFloorVal, denomFloor); }
+      }
+      forAll(omegaDenom, cellI)
+      {
+          scalar& ov = omegaDenom[cellI];
+          if (!std::isfinite(ov) || ov < denomFloor) { ov = Foam::max(omegaFloorVal, denomFloor); }
+      }
       // Adjoint momentum source: scale to [0 1 -2]. ka-term: div/(k); omegaa-term: div/(omega)*nut
       // Use nutSafe to avoid FPE when nut is negative (ill-conditioned topology/porous regions)
       turbSourceUa =
@@ -149,11 +161,13 @@ for(i=0;i<maxAdjUaIter;i++)
       MTOdiag::logMetric(runTime, opt, uaStage, "turbSourceUa_localCoeff", localCapCoeff);
   }
 
+  // Floor nuEff to avoid singular/indefinite matrix from negative nut in porous regions
+  const volScalarField nuEffUa(max(turbulence->nuEff(), dimensionedScalar("nuMin", turbulence->nuEff().dimensions(), 1e-12)));
   tmp<fvVectorMatrix> tUaEqn
   (
       fvm::div(-phi, Ua)
     + adjointTransposeConvectiona
-    - fvm::laplacian(turbulence->nuEff(), Ua)
+    - fvm::laplacian(nuEffUa, Ua)
     + fvm::Sp(adjPseudoUa, Ua)
     + fvm::Sp(alpha, Ua)
    ==
@@ -190,6 +204,14 @@ for(i=0;i<maxAdjUaIter;i++)
   MTOdiag::logMetric(runTime, opt, uaStage, "uaRHS_usedMax", uaRhsUsedMax);
   SolverPerformance<vector> spUa = solve(UaEqn == uaRHS);
   logSolverStats(runTime, "AdjointFlow_Ua", i, "Ua", spUa, opt, runTime.timeName());
+  if (spUa.singular() || !std::isfinite(spUa.initialResidual()) || !std::isfinite(spUa.finalResidual()))
+  {
+      Info<< "Warning: Ua solve singular or non-finite; restoring last safe Ua/pa state." << endl;
+      Ua = UaSafe;
+      pa = paSafe;
+      phia = phiaSafe;
+      break;
+  }
 
   fvOptions.correct(Ua);
 //****************************************

@@ -1,5 +1,6 @@
 Info<<"cost function"<<endl;
 MeanT=fvc::domainIntegrate(T).value()/area;
+maxT=gMax(T.primitiveField());
 V=fvc::domainIntegrate(xh).value()/area-(voluse+0*Foam::max(0,0.5-opt*0.015));
 
 // Actual (raw) power dissipation before normalization (includes turbulent kinetic energy flux for turbulent flow)
