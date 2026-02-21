@@ -107,6 +107,11 @@ The codebase has a layered stabilization framework designed for turbulent topolo
 - Diagnostic controls:
   - `diagLevel`, `diagEvery`, `diagRank`, `diagOptStart`
 
+### G) Reciprocal-diagonal FPE guards (2026-02-21)
+- Guard `rAU`/`rAt` computation in Primal_U, AdjointFlow_Ua, AdjointHeat_Ub to prevent FPE from division by zero when momentum-matrix diagonal is zero or near-zero (stiff adjoint cases on some MPI ranks).
+- Floor diagonal at 1e-30 before inversion; floor rAt denominator analogously. Use `Foam::mag(a)` to catch negative diagonals.
+- Sanitize adjointTransposeConvection for non-finite; guard gAverage for empty-mesh/NaN; floor nut (nutSafe) in turbSourceUa and Adjoint_kOmegaSST; guard opt_initialization b.value(); guard magSf in adjoint outlet BCs.
+
 ## 5) Current numerical behavior (latest observed state)
 
 - Recent runs progressed beyond earlier stop points and reached iteration ~141.

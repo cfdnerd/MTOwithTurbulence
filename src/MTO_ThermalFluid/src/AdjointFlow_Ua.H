@@ -71,6 +71,14 @@ for(i=0;i<maxAdjUaIter;i++)
   const scalar hChar = Foam::pow(volTot/nCell, 1.0/3.0);
   const scalar convScale = Foam::max(UmaxStage*UmaxStage/Foam::max(hChar, 1e-8), 1e-8);
   volVectorField adjointTransposeConvectiona((fvc::grad(U) & Ua));
+  forAll(adjointTransposeConvectiona, cellI)
+  {
+      vector& cv = adjointTransposeConvectiona[cellI];
+      if (!(std::isfinite(cv.x()) && std::isfinite(cv.y()) && std::isfinite(cv.z())))
+      {
+          cv = vector::zero;
+      }
+  }
 
   volVectorField turbSourceUa(fvc::grad(pa) * scalar(0));  // zero by default
   if (mesh.thisDb().foundObject<volScalarField>("k") && mesh.thisDb().foundObject<volScalarField>("omega"))
@@ -80,6 +88,7 @@ for(i=0;i<maxAdjUaIter;i++)
       const volScalarField& k = mesh.thisDb().lookupObject<volScalarField>("k");
       const volScalarField& omega = mesh.thisDb().lookupObject<volScalarField>("omega");
       const volScalarField& nut = turbulence->nut();
+      const volScalarField nutSafe(max(nut, dimensionedScalar("zero", nut.dimensions(), 0.0)));
       const dimensionedScalar gamma1("gamma1", dimless, 5.0/9.0);
       // Adaptive denominator floors to avoid division-driven source blowup
       const scalar kAvg = Foam::max(gAverage(k.primitiveField()), 1e-12);
@@ -91,9 +100,10 @@ for(i=0;i<maxAdjUaIter;i++)
       const volScalarField kDenom(max(k, kSmall));
       const volScalarField omegaDenom(max(omega, omegaSmall));
       // Adjoint momentum source: scale to [0 1 -2]. ka-term: div/(k); omegaa-term: div/(omega)*nut
+      // Use nutSafe to avoid FPE when nut is negative (ill-conditioned topology/porous regions)
       turbSourceUa =
-          -fvc::div(ka*2*nut*twoSymm(fvc::grad(U)))/kDenom
-          -nut*fvc::div(omegaa*2*gamma1*twoSymm(fvc::grad(U)))/omegaDenom;
+          -fvc::div(ka*2*nutSafe*twoSymm(fvc::grad(U)))/kDenom
+          -nutSafe*fvc::div(omegaa*2*gamma1*twoSymm(fvc::grad(U)))/omegaDenom;
       turbSourceUa *= betaAdj;
       turbSourceUa *= passGain;
 
@@ -183,8 +193,19 @@ for(i=0;i<maxAdjUaIter;i++)
 
   fvOptions.correct(Ua);
 //****************************************
-  volScalarField rAUa(1.0/UaEqn.A());
-  const scalar rAUaAvg = Foam::max(gAverage(rAUa.primitiveField()), 1e-12);
+  // Guard diagonal before inversion to prevent FPE from division by zero
+  // (UaEqn.A() can be zero/near-zero/negative in stiff adjoint cases on some ranks)
+  const scalar rAUaDiagFloor = 1e-30;  // floor for 1/A to prevent FPE (>= ROOTVSMALL)
+  volScalarField AaDiag(UaEqn.A());
+  forAll(AaDiag, cellI)
+  {
+      scalar& a = AaDiag[cellI];
+      if (!std::isfinite(a) || Foam::mag(a) < rAUaDiagFloor) { a = rAUaDiagFloor; }
+  }
+  volScalarField rAUa(1.0/AaDiag);
+  const scalar rAUaAvgRaw = gAverage(rAUa.primitiveField());
+  const scalar rAUaAvg = (std::isfinite(rAUaAvgRaw) && rAUaAvgRaw > 0)
+      ? Foam::max(rAUaAvgRaw, 1e-12) : 1e-12;
   const scalar rAUaMin = 1e-6*rAUaAvg;
   const scalar rAUaMax = 1e6*rAUaAvg;
   forAll(rAUa, cellI)
@@ -209,7 +230,16 @@ for(i=0;i<maxAdjUaIter;i++)
   bool useConsistentBranchUa = simple.consistent();
   if (simple.consistent())
   {
-      rAtUa = 1.0/(1.0/rAUa - UaEqn.H1());
+      volScalarField rAtDenom(1.0/rAUa - UaEqn.H1());
+      forAll(rAtDenom, cellI)
+      {
+          scalar& d = rAtDenom[cellI];
+          if (!std::isfinite(d) || Foam::mag(d) < rAUaDiagFloor)
+          {
+              d = (d >= 0 ? rAUaDiagFloor : -rAUaDiagFloor);
+          }
+      }
+      rAtUa = 1.0/rAtDenom;
       label nBadRAtUa = 0;
       volScalarField& rAtUaRef = rAtUa.ref();
       forAll(rAtUaRef, cellI)

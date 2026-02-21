@@ -113,16 +113,17 @@ void Foam::adjointOutletPressurePowerFvPatchScalarField::updateCoeffs()
         nueff += nut.boundaryField()[patch().index()];
     }
 
-    scalarField Up_n = phip / patch().magSf();//Primal
+    const scalarField magSfSafe(max(patch().magSf(), Foam::VSMALL));
+    scalarField Up_n = phip / magSfSafe;//Primal
 
-    scalarField Uap_n = phiap / patch().magSf();//Adjoint
+    scalarField Uap_n = phiap / magSfSafe;//Adjoint
 
     const scalarField& deltainv = patch().deltaCoeffs(); // distance^(-1)
 
     scalarField Uaneigh_n = (Uap.patchInternalField() & patch().nf());
     
     operator == ( (Up_n * Uap_n) +2*nueff*deltainv*(Uap_n-Uaneigh_n) -
-    	(0.5*mag(Up)*mag(Up)) - (Up & patch().Sf()/patch().magSf()) * (Up & patch().Sf()/patch().magSf())) ;
+    	(0.5*mag(Up)*mag(Up)) - (Up & patch().Sf()/magSfSafe) * (Up & patch().Sf()/magSfSafe)) ;
 
     fixedValueFvPatchScalarField::updateCoeffs();
 }

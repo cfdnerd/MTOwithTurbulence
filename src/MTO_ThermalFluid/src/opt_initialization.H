@@ -16,8 +16,9 @@ N=x.size();//N:design freedom
 reduce(N, sumOp<scalar>()); 
 
 scalar V(0),area=gSum(mesh.V()),MeanT(0),PowerDiss(0),maxT(0),sumT(0);
-double len=std::pow(area/N, 1.0/3);
-b.value()=1.0/(filterR*len/3.464)/(filterR*len/3.464);
+double len=std::pow(Foam::max(area/N, 1e-30), 1.0/3);
+double denomSq = Foam::max(filterR*len/3.464, 1e-30);
+b.value()=1.0/(denomSq*denomSq);
 //***********************************//MMA
 int m=2;//number of constraint
 MMA mma(n,m);

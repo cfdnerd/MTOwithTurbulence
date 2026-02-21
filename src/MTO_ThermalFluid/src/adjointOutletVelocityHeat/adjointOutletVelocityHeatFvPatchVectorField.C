@@ -114,19 +114,20 @@ void Foam::adjointOutletVelocityHeatFvPatchVectorField::updateCoeffs()
     const scalarField& deltainv =
         patch().deltaCoeffs(); // dist^(-1)
 
+    const scalarField magSfSafe(max(patch().magSf(), Foam::VSMALL));
 //Primal velocity, mag of normal component and tangential component
-    scalarField Up_ns = phip/patch().magSf();
+    scalarField Up_ns = phip/magSfSafe;
 
-    vectorField Up_t = Up - (phip * patch().Sf())/(patch().magSf()*patch().magSf());
+    vectorField Up_t = Up - (phip * patch().Sf())/(magSfSafe*magSfSafe);
 
 //Tangential component of adjoint velocity in neighbouring node
     vectorField Uaneigh = Uap.patchInternalField();
     vectorField Uaneigh_n = (Uaneigh & patch().nf())*patch().nf();
     vectorField Uaneigh_t = Uaneigh - Uaneigh_n;
 
-    vectorField Uap_t = (nueff*deltainv*Uaneigh_t) / (Up_ns+nueff*deltainv);
+    vectorField Uap_t = (nueff*deltainv*Uaneigh_t) / (Up_ns+nueff*deltainv+Foam::VSMALL);
 
-    vectorField Uap_n = (phiap * patch().Sf())/(patch().magSf()*patch().magSf());
+    vectorField Uap_n = (phiap * patch().Sf())/(magSfSafe*magSfSafe);
 
     operator==(Uap_t+Uap_n);
 

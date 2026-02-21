@@ -16,6 +16,7 @@
         const volScalarField& k = mesh.thisDb().lookupObject<volScalarField>("k");
         const volScalarField& omega = mesh.thisDb().lookupObject<volScalarField>("omega");
         const volScalarField& nut = turbulence->nut();
+        const volScalarField nutSafe(max(nut, dimensionedScalar("zero", nut.dimensions(), 0.0)));
 
         // SST constants (must match primal kOmegaSST)
         const dimensionedScalar alphaK1("alphaK1", dimless, 0.85);
@@ -25,12 +26,12 @@
         const dimensionedScalar kSmall("kSmall", dimArea/dimTime/dimTime, 1e-10);
         const dimensionedScalar omegaSmall("omegaSmall", dimless/dimTime, 1e-10);
 
-        volScalarField dNutdk(nut/(k + kSmall));
-        volScalarField dNutdOmega(-nut/(omega + omegaSmall));
+        volScalarField dNutdk(nutSafe/(k + kSmall));
+        volScalarField dNutdOmega(-nutSafe/(omega + omegaSmall));
 
-        // Effective diffusivities for k and omega
-        volScalarField DkEff("DkEff", nu + alphaK1*nut);
-        volScalarField DomegaEff("DomegaEff", nu + alphaOmega1*nut);
+        // Effective diffusivities for k and omega (use nutSafe to avoid negative diffusivity)
+        volScalarField DkEff("DkEff", nu + alphaK1*nutSafe);
+        volScalarField DomegaEff("DomegaEff", nu + alphaOmega1*nutSafe);
 
         // RHS: source from momentum (d(nut)/dk * dev2(twoSymm(grad(U))) : grad(Ua))
         // Raw term has dim [0 0 -1]; ka eqn needs [0 2 -3], omegaa eqn needs [0 0 -2]

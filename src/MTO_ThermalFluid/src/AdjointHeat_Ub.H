@@ -27,6 +27,14 @@ const scalar pbSafeAvg = Foam::max(gAverage(magPbSafe.primitiveField()), 1e-8);
 const scalar UbHardCap = Foam::min(Foam::max(50.0*UbSafeAvg, 1e3), Foam::max(1e6*UmaxStageUb, 1e3));
 const scalar pbHardCap = Foam::min(Foam::max(50.0*pbSafeAvg, 1e4), Foam::max(1e6*UmaxStageUb*UmaxStageUb, 1e5));
 volVectorField adjointTransposeConvectionb((fvc::grad(U) & Ub));
+forAll(adjointTransposeConvectionb, cellI)
+{
+    vector& cv = adjointTransposeConvectionb[cellI];
+    if (!(std::isfinite(cv.x()) && std::isfinite(cv.y()) && std::isfinite(cv.z())))
+    {
+        cv = vector::zero;
+    }
+}
 
 tmp<fvVectorMatrix> tUbEqn
 (
@@ -66,8 +74,18 @@ forAll(Ub, cellI)
     }
 }
 //****************************************
-volScalarField rAUb(1.0/UbEqn.A());
-const scalar rAUbAvg = Foam::max(gAverage(rAUb.primitiveField()), 1e-12);
+// Guard diagonal before inversion to prevent FPE from division by zero
+const scalar rAUbDiagFloor = 1e-30;  // floor for 1/A to prevent FPE
+volScalarField AbDiag(UbEqn.A());
+forAll(AbDiag, cellI)
+{
+    scalar& a = AbDiag[cellI];
+    if (!std::isfinite(a) || Foam::mag(a) < rAUbDiagFloor) { a = rAUbDiagFloor; }
+}
+volScalarField rAUb(1.0/AbDiag);
+const scalar rAUbAvgRaw = gAverage(rAUb.primitiveField());
+const scalar rAUbAvg = (std::isfinite(rAUbAvgRaw) && rAUbAvgRaw > 0)
+    ? Foam::max(rAUbAvgRaw, 1e-12) : 1e-12;
 const scalar rAUbMin = 1e-6*rAUbAvg;
 const scalar rAUbMax = 1e6*rAUbAvg;
 forAll(rAUb, cellI)
@@ -93,7 +111,16 @@ tmp<volScalarField> rAtUb(rAUb);
 bool useConsistentBranchUb = simple.consistent();
 if (simple.consistent())
 {
-    rAtUb = 1.0/(1.0/rAUb - UbEqn.H1());
+    volScalarField rAtDenomb(1.0/rAUb - UbEqn.H1());
+    forAll(rAtDenomb, cellI)
+    {
+        scalar& d = rAtDenomb[cellI];
+        if (!std::isfinite(d) || Foam::mag(d) < rAUbDiagFloor)
+        {
+            d = (d >= 0 ? rAUbDiagFloor : -rAUbDiagFloor);
+        }
+    }
+    rAtUb = 1.0/rAtDenomb;
     label nBadRAtUb = 0;
     volScalarField& rAtUbRef = rAtUb.ref();
     forAll(rAtUbRef, cellI)

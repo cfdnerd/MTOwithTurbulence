@@ -24,9 +24,19 @@ if (simple.momentumPredictor())
     fvOptions.correct(U);
 }
 //****************************************//
-volScalarField rAU(1.0/UEqn.A());
+// Guard diagonal before inversion to prevent FPE from division by zero
+const scalar rAUDiagFloor = 1e-30;  // floor for 1/A to prevent FPE
+volScalarField ADiag(UEqn.A());
+forAll(ADiag, cellI)
+{
+    scalar& a = ADiag[cellI];
+    if (!std::isfinite(a) || Foam::mag(a) < rAUDiagFloor) { a = rAUDiagFloor; }
+}
+volScalarField rAU(1.0/ADiag);
 // Sanitize and bound rAU to keep pressure matrix scaling stable
-const scalar rAUavg = Foam::max(gAverage(rAU.primitiveField()), 1e-12);
+const scalar rAUavgRaw = gAverage(rAU.primitiveField());
+const scalar rAUavg = (std::isfinite(rAUavgRaw) && rAUavgRaw > 0)
+    ? Foam::max(rAUavgRaw, 1e-12) : 1e-12;
 const scalar rAUmin = 1e-6*rAUavg;
 const scalar rAUmax = 1e6*rAUavg;
 forAll(rAU, cellI)
@@ -51,7 +61,16 @@ tmp<volScalarField> rAtU(rAU);
 bool useConsistentBranch = simple.consistent();
 if (simple.consistent())
 {
-    rAtU = 1.0/(1.0/rAU - UEqn.H1());
+    volScalarField rAtDenomU(1.0/rAU - UEqn.H1());
+    forAll(rAtDenomU, cellI)
+    {
+        scalar& d = rAtDenomU[cellI];
+        if (!std::isfinite(d) || Foam::mag(d) < rAUDiagFloor)
+        {
+            d = (d >= 0 ? rAUDiagFloor : -rAUDiagFloor);
+        }
+    }
+    rAtU = 1.0/rAtDenomU;
     label nBadRAtU = 0;
     volScalarField& rAtURef = rAtU.ref();
     forAll(rAtURef, cellI)
