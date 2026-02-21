@@ -62,3 +62,7 @@ for(i=0;i<n;i++)
      xh[i]=eta5+(1-eta5)*(1-Foam::exp(-del*(xp[i]-eta5)/(1-eta5))+(xp[i]-eta5)*Foam::exp(-del)/(1-eta5));
    }   
 }
+// Overwrite fixed zones (reference MTO: solid/fluid in Heaviside_rho; add test to prevent filter-bleed gray)
+if(solid_area) { forAll(cells_solid, i) { xh[cells_solid[i]] = 0; } }
+if(fluid_area) { forAll(cells_fluid, i) { xh[cells_fluid[i]] = 1.0; } }
+if(test_area)  { forAll(cells_test, i)  { xh[cells_test[i]]  = 1.0; } }

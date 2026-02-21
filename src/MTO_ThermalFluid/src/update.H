@@ -22,31 +22,31 @@ if(test_area)
       xh[cells_test[i]]=1.0;
    }
 }
-// Design-boundary blend: blend design cells adjacent to fluid_area toward xh=1 (smooth interface)
-if(fluid_area && designBoundaryBlend > 1e-12)
+// Design-boundary blend: blend design cells adjacent to fluid_area or test_area toward xh=1 (smooth interface)
+// Include test_area so design-test boundary gets same treatment as design-fluid (reference MTO had gray at test interface)
+if((fluid_area || test_area) && designBoundaryBlend > 1e-12)
 {
    const labelList& own = mesh.owner();
    const labelList& nei = mesh.neighbour();
-   HashSet<label> fluidSet(cells_fluid.size());
-   forAll(cells_fluid, i) fluidSet.insert(cells_fluid[i]);
+   HashSet<label> fixedFluidSet(cells_fluid.size() + (test_area ? cells_test.size() : 0));
+   if(fluid_area) { forAll(cells_fluid, i) fixedFluidSet.insert(cells_fluid[i]); }
+   if(test_area)  { forAll(cells_test, i)  fixedFluidSet.insert(cells_test[i]);  }
    HashSet<label> solidSet;
    if(solid_area) { solidSet.resize(cells_solid.size()); forAll(cells_solid, i) solidSet.insert(cells_solid[i]); }
-   HashSet<label> testSet;
-   if(test_area)  { testSet.resize(cells_test.size());  forAll(cells_test, i)  testSet.insert(cells_test[i]);  }
    forAll(own, facei)
    {
       label o = own[facei];
       label n = nei[facei];
-      bool oFluid = fluidSet.found(o);
-      bool nFluid = fluidSet.found(n);
-      bool nDesign = !fluidSet.found(n) && (!solid_area || !solidSet.found(n)) && (!test_area || !testSet.found(n));
-      bool oDesign = !fluidSet.found(o) && (!solid_area || !solidSet.found(o)) && (!test_area || !testSet.found(o));
-      if(oFluid && nDesign)
+      bool oFixedFluid = fixedFluidSet.found(o);
+      bool nFixedFluid = fixedFluidSet.found(n);
+      bool nDesign = !fixedFluidSet.found(n) && (!solid_area || !solidSet.found(n));
+      bool oDesign = !fixedFluidSet.found(o) && (!solid_area || !solidSet.found(o));
+      if(oFixedFluid && nDesign)
       {
          scalar& xhn = xh[n];
          xhn = (1.0-designBoundaryBlend)*xhn + designBoundaryBlend*1.0;
       }
-      else if(!oFluid && nFluid && oDesign)
+      else if(!oFixedFluid && nFixedFluid && oDesign)
       {
          scalar& xho = xh[o];
          xho = (1.0-designBoundaryBlend)*xho + designBoundaryBlend*1.0;
