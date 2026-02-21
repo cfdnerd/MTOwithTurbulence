@@ -40,17 +40,17 @@ raa0                1e-5;      // MMA regularization parameter
 mma_init            0.3;       // MMA asymptote initialization factor
 mma_dec             0.7;       // MMA asymptote decrease factor
 mma_inc             1.2;       // MMA asymptote increase factor
-movlim              0.25;      // MMA move limit (0.25 for turbulent; tighter = more stable)
+movlim              0.2;       // MMA move limit (tighter = less gray, more stable; 0.2 for strong gray suppression)
 
 // ========================================================================== //
 // 4. FILTER (structure and radii)                                            //
 // ========================================================================== //
 // useCascadedFilter: no = legacy single-stage; yes = cascaded (use with filterStage2Nonlinear for gray suppression)
 useCascadedFilter   yes;       // yes + filterStage2Nonlinear yes = cascaded fW-mean (gray suppression)
-filterR             2.2;       // Stage 1 filter radius (larger = smoother but MORE gray; keep moderate)
-filterR2            1.6;       // Stage 2 radius (linear mode); PDE kernel radius (nonlinear mode)
+filterR             1.9;       // Stage 1 filter radius (smaller = less smoothing, less gray; was 2.2)
+filterR2            1.35;      // Stage 2 radius (tighter = less gray; was 1.6)
 filterStage2Nonlinear yes;     // yes = fW-mean power stage (gray suppression); no = linear PDE (more gray)
-filterPMean         6;         // fW-mean exponent p (p>1 sharpens; 6–8 for gray suppression; 4=mild, 16=strong)
+filterPMean         8;         // fW-mean exponent p (higher = sharper, less gray; 8–12 for strong suppression)
 
 // Filter length scale (affects both legacy and cascaded)
 filterLenAniso      yes;       // yes = geometric-mean len for channel mesh; no = volume-based
@@ -61,10 +61,10 @@ Re_ref              1000;      // Reference Re for filter scaling (when filterTu
 // 5. HEAVISIDE PROJECTION                                                    //
 // ========================================================================== //
 // (Legacy filter; cascaded uses same for its Heaviside stage)
-heavisideDelFactor  0.33;      // Heaviside ramp factor (0.3–0.35 for stronger gray suppression at ~180 iters)
-heavisideDelCap     150;       // Heaviside sharpness cap (higher = sharper projection at convergence)
-heavisideDelStart   35;        // Iteration to start sharpening (earlier = less gray by mid-run)
-heavisideDelInit    5;         // Initial del when opt<=heavisideDelStart (gentle)
+heavisideDelFactor  0.38;      // Heaviside ramp factor (higher = sharper, less gray; 0.35–0.4 for strong suppression)
+heavisideDelCap     180;       // Heaviside sharpness cap (higher = sharper at convergence)
+heavisideDelStart   25;        // Iteration to start sharpening (earlier = less gray by mid-run)
+heavisideDelInit    4;         // Initial del when opt<=heavisideDelStart (gentle)
 
 // ========================================================================== //
 // 6. BRINKMAN & DENSITY PROJECTION                                           //
@@ -74,7 +74,7 @@ quRampStart         100;       // Iteration to start qu ramp (was 80)
 quRampRate          8e-5;      // qu increment per opt (slower than 1e-4)
 quCap               0.012;     // qu cap (was 0.01)
 xhFloorTurbMult     1.5;       // Multiplier on xh floor for turbulent (1=laminar; 1.5=turbulent)
-designBoundaryBlend 0.08;      // Blend design cells adj to fluid toward 1 (0=off; 0.05-0.1 typical)
+designBoundaryBlend 0.12;      // Blend design cells adj to fluid/test toward 1 (stronger = less gray at boundaries)
 
 // ========================================================================== //
 // 7. ADJOINT: COUPLING                                                       //
