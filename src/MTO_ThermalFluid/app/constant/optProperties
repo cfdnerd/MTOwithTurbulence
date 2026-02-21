@@ -50,7 +50,7 @@ useCascadedFilter   yes;       // yes + filterStage2Nonlinear yes = cascaded fW-
 filterR             2.2;       // Stage 1 filter radius (larger = smoother but MORE gray; keep moderate)
 filterR2            1.6;       // Stage 2 radius (linear mode); PDE kernel radius (nonlinear mode)
 filterStage2Nonlinear yes;     // yes = fW-mean power stage (gray suppression); no = linear PDE (more gray)
-filterPMean         4;         // fW-mean exponent p (p>1 sharpens; 4–8 typical; 2=mild, 16=strong)
+filterPMean         6;         // fW-mean exponent p (p>1 sharpens; 6–8 for gray suppression; 4=mild, 16=strong)
 
 // Filter length scale (affects both legacy and cascaded)
 filterLenAniso      yes;       // yes = geometric-mean len for channel mesh; no = volume-based
@@ -61,9 +61,9 @@ Re_ref              1000;      // Reference Re for filter scaling (when filterTu
 // 5. HEAVISIDE PROJECTION                                                    //
 // ========================================================================== //
 // (Legacy filter; cascaded uses same for its Heaviside stage)
-heavisideDelFactor  0.28;      // Heaviside ramp factor (0.25-0.3 for turbulent; was 0.35 laminar)
-heavisideDelCap     120;       // Heaviside sharpness cap (100-120 for turbulent; was 150)
-heavisideDelStart   50;        // Iteration to start sharpening (delay for turbulent stability)
+heavisideDelFactor  0.33;      // Heaviside ramp factor (0.3–0.35 for stronger gray suppression at ~180 iters)
+heavisideDelCap     150;       // Heaviside sharpness cap (higher = sharper projection at convergence)
+heavisideDelStart   35;        // Iteration to start sharpening (earlier = less gray by mid-run)
 heavisideDelInit    5;         // Initial del when opt<=heavisideDelStart (gentle)
 
 // ========================================================================== //
