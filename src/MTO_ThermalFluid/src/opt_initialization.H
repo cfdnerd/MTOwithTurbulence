@@ -31,8 +31,14 @@ double denomSq2 = Foam::max(filterR2*len/3.464, 1e-30);
 b.value()=1.0/(denomSq1*denomSq1);
 bFilter2.value()=1.0/(denomSq2*denomSq2);
 
-// Write mesh/filter estimates at top of solver_status.log (master only)
-writeMeshFilterHeader(runTime, mesh, area, N, len, filterR, filterR2, GeoDim, nu, U);
+// Store mesh/filter header for deferred write at opt 1 (when writeMeshFilterHeader yes)
+if (writeMeshFilterHeader)
+{
+    const label nCell = returnReduce(mesh.nCells(), sumOp<label>());
+    const scalar volTot = gSum(mesh.V());
+    const scalar Uref = Foam::max(gMax(mag(U.primitiveField())), 1e-12);
+    storeMeshFilterHeaderContent(nCell, volTot, Uref, area, N, len, filterR, filterR2, GeoDim, nu.value());
+}
 
 //***********************************//MMA
 int m=2;//number of constraint

@@ -121,6 +121,7 @@ adjUaHigherPassTbMax 1e5;      // Skip higher-pass Ua update if |Tb| exceeds thi
 // ========================================================================== //
 // 11. RUNTIME DIAGNOSTICS                                                    //
 // ========================================================================== //
+writeMeshFilterHeader yes;     // Write mesh/filter estimates to solver_status.log at opt 1
 diagLevel           0;         // 0: off, 1: metrics, 2: full field-health logs
 diagEvery           1;         // Log diagnostics every N optimization iterations
 diagRank            -1;        // -1: all ranks, otherwise selected MPI rank only

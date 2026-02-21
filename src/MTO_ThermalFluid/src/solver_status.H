@@ -8,6 +8,7 @@
 
 #include "OFstream.H"
 #include "HashTable.H"
+#include <sstream>
 
 namespace MTOsolverStatus
 {
@@ -17,6 +18,7 @@ namespace MTOsolverStatus
     static HashTable<label> nSolves;
     static HashTable<label> nConverged;
     static HashTable<label> nSingular;
+    static std::string meshFilterHeaderContent;
 }
 
 //- Accumulate solver stats (master rank only)
@@ -98,63 +100,55 @@ inline void logSolverStats
     }
 }
 
-//- Write mesh/filter header block at top of solver_status.log (call once at init)
-inline void writeMeshFilterHeader
+//- Store mesh/filter header for deferred write (no file I/O at init; avoids stall on clusters)
+inline void storeMeshFilterHeaderContent
 (
-    const Time& runTime,
-    const fvMesh& mesh,
+    const label nCell,
+    const scalar volTot,
+    const scalar Uref,
     const scalar area,
     const scalar N,
     const scalar len,
     const scalar filterR,
     const scalar filterR2,
     const scalar GeoDim,
-    const dimensionedScalar& nu,
-    const volVectorField& U
+    const scalar nuVal
 )
 {
     if (!Pstream::master()) return;
 
-    const fileName logPath(runTime.rootPath()/runTime.globalCaseName()/"solver_status.log");
-    OFstream logFile(logPath, IOstream::ASCII, IOstream::currentVersion, IOstream::UNCOMPRESSED, false);
-    if (!logFile.good()) return;
-
-    logFile.setf(std::ios::scientific);
-    logFile.precision(6);
-
-    const label nCell = returnReduce(mesh.nCells(), sumOp<label>());
-    const scalar volTot = gSum(mesh.V());
     const scalar hChar = Foam::pow(Foam::max(volTot/nCell, 1e-30), 1.0/3.0);
     const scalar lenCell = (GeoDim >= 2) ? std::pow(Foam::max(area/N, 1e-30), 1.0/GeoDim) : hChar;
     const scalar radius1 = filterR * len;
     const scalar radius2 = filterR2 * len;
     const scalar cellsInRadius1 = Foam::max(radius1/lenCell, 0.5);
     const scalar cellsInRadius2 = Foam::max(radius2/lenCell, 0.5);
-
-    // Suggested filterR: ~2 cells for sharper (less gray), ~3 cells for moderate smoothing
     const scalar filterR_suggested_min = Foam::max(1.5, 1.5 * lenCell / Foam::max(len, 1e-30));
     const scalar filterR_suggested_max = Foam::max(2.5, 2.5 * lenCell / Foam::max(len, 1e-30));
+    const scalar Re_est = Uref * len / nuVal;
 
-    const scalar Uref = Foam::max(gMax(mag(U.primitiveField())), 1e-12);
-    const scalar Re_est = Uref * len / nu.value();
+    std::ostringstream os;
+    os.precision(6);
+    os.setf(std::ios::scientific);
+    os << "# ================================================================================\n";
+    os << "# MTO_ThermalFluid - Mesh & Filter Estimates (deferred write at opt 1)\n";
+    os << "# ================================================================================\n";
+    os << "# Mesh:  nCells " << nCell << "  area " << area << "  N_design " << N
+       << "  h_char " << hChar << "  len_cell " << lenCell << "\n";
+    os << "# Filter:  len " << len << "  filterR " << filterR << "  filterR2 " << filterR2
+       << "  GeoDim " << GeoDim << "\n";
+    os << "# Filter radius (physical):  stage1 " << radius1 << "  stage2 " << radius2
+       << "  (~" << cellsInRadius1 << ", " << cellsInRadius2 << " cells)\n";
+    os << "# Suggested filterR for mesh (less gray):  " << filterR_suggested_min
+       << " ... " << filterR_suggested_max << "  (rule-of-thumb: 2-3 cell radii)\n";
+    os << "# --------------------------------------------------------------------------------\n";
+    os << "# Turbulence mesh criteria (RAS k-omega SST):\n";
+    os << "#   Re_est " << Re_est << "  (U_ref*len/nu)\n";
+    os << "#   y+ < 5 wall-resolved:  first cell delta_y < 50*nu/U_bulk (approx)\n";
+    os << "#   Turb. length scale l_t ~ 0.07*L:  resolve with h < l_t/2 for boundary layers\n";
+    os << "# ================================================================================\n\n";
 
-    logFile << "# ================================================================================\n";
-    logFile << "# MTO_ThermalFluid - Mesh & Filter Estimates (written at init)\n";
-    logFile << "# ================================================================================\n";
-    logFile << "# Mesh:  nCells " << nCell << "  area " << area << "  N_design " << N
-            << "  h_char " << hChar << "  len_cell " << lenCell << "\n";
-    logFile << "# Filter:  len " << len << "  filterR " << filterR << "  filterR2 " << filterR2
-            << "  GeoDim " << GeoDim << "\n";
-    logFile << "# Filter radius (physical):  stage1 " << radius1 << "  stage2 " << radius2
-            << "  (~" << cellsInRadius1 << ", " << cellsInRadius2 << " cells)\n";
-    logFile << "# Suggested filterR for mesh (less gray):  " << filterR_suggested_min
-            << " ... " << filterR_suggested_max << "  (rule-of-thumb: 2-3 cell radii)\n";
-    logFile << "# --------------------------------------------------------------------------------\n";
-    logFile << "# Turbulence mesh criteria (RAS k-omega SST):\n";
-    logFile << "#   Re_est " << Re_est << "  (U_ref*len/nu)\n";
-    logFile << "#   y+ < 5 wall-resolved:  first cell delta_y < 50*nu/U_bulk (approx)\n";
-    logFile << "#   Turb. length scale l_t ~ 0.07*L:  resolve with h < l_t/2 for boundary layers\n";
-    logFile << "# ================================================================================\n\n";
+    MTOsolverStatus::meshFilterHeaderContent = os.str();
 }
 
 //- Write accumulated solver summary to solver_status.log and clear
@@ -166,11 +160,20 @@ inline void writeSolverStatusSummary(const Time& runTime, const label optIter)
     if (maxInitRes.empty()) return;
 
     const fileName logPath(runTime.rootPath()/runTime.globalCaseName()/"solver_status.log");
-    OFstream logFile(logPath, IOstream::ASCII, IOstream::currentVersion, IOstream::UNCOMPRESSED, true);
+    // opt 1 with stored mesh header: overwrite file (header at top, then solver table); otherwise append
+    const bool appendMode = (optIter > 1) || meshFilterHeaderContent.empty();
+    OFstream logFile(logPath, IOstream::ASCII, IOstream::currentVersion, IOstream::UNCOMPRESSED, appendMode);
     if (!logFile.good()) return;
 
     logFile.setf(std::ios::scientific);
     logFile.precision(6);
+
+    // Write mesh/filter header first if stored (deferred from init to avoid cluster stall)
+    if (optIter == 1 && !meshFilterHeaderContent.empty())
+    {
+        logFile << meshFilterHeaderContent;
+        meshFilterHeaderContent.clear();
+    }
 
     if (optIter == 1)
     {
