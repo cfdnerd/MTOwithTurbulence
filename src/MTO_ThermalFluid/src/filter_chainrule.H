@@ -6,7 +6,8 @@
     volScalarField tmpG(mag(gsenshPowerDiss));
     if(solid_area) { forAll(cells_solid,i) { tmpF[cells_solid[i]]=0; tmpG[cells_solid[i]]=0; } }
     if(fluid_area) { forAll(cells_fluid,i) { tmpF[cells_fluid[i]]=0; tmpG[cells_fluid[i]]=0; } }
-    // Reference: do not exclude test_area from normalization; test zone participates in design
+    // test_area=yes: exclude test from max so design domain drives scale (avoids dilution, faster design updates)
+    if(test_area) { forAll(cells_test,i) { tmpF[cells_test[i]]=0; tmpG[cells_test[i]]=0; } }
     const scalar sensFloor = 1e-12;
     scalar maxF = Foam::max(gMax(tmpF), sensFloor);
     scalar maxG = Foam::max(gMax(tmpG), sensFloor);

@@ -16,7 +16,7 @@ if(fluid_area)
    }
 }
 // Reference convention: xh[test] set at init only (createFields), not overwritten per iteration
-// Design-boundary blend: blend design cells adjacent to fluid_area toward xh=1 (smooth interface)
+// Design-boundary blend: blend design + test_area cells adjacent to fluid_area toward xh=1
 if(fluid_area && designBoundaryBlend > 1e-12)
 {
    const labelList& own = mesh.owner();
@@ -25,22 +25,21 @@ if(fluid_area && designBoundaryBlend > 1e-12)
    forAll(cells_fluid, i) fluidSet.insert(cells_fluid[i]);
    HashSet<label> solidSet;
    if(solid_area) { solidSet.resize(cells_solid.size()); forAll(cells_solid, i) solidSet.insert(cells_solid[i]); }
-   HashSet<label> testSet;
-   if(test_area) { testSet.resize(cells_test.size()); forAll(cells_test, i) testSet.insert(cells_test[i]); }
    forAll(own, facei)
    {
       label o = own[facei];
       label n = nei[facei];
       bool oFluid = fluidSet.found(o);
       bool nFluid = fluidSet.found(n);
-      bool nDesign = !fluidSet.found(n) && (!solid_area || !solidSet.found(n)) && (!test_area || !testSet.found(n));
-      bool oDesign = !fluidSet.found(o) && (!solid_area || !solidSet.found(o)) && (!test_area || !testSet.found(o));
-      if(oFluid && nDesign)
+      // Blend any non-fluid, non-solid cell (design and test_area) when adjacent to fluid
+      bool nBlendable = !fluidSet.found(n) && (!solid_area || !solidSet.found(n));
+      bool oBlendable = !fluidSet.found(o) && (!solid_area || !solidSet.found(o));
+      if(oFluid && nBlendable)
       {
          scalar& xhn = xh[n];
          xhn = (1.0-designBoundaryBlend)*xhn + designBoundaryBlend*1.0;
       }
-      else if(!oFluid && nFluid && oDesign)
+      else if(!oFluid && nFluid && oBlendable)
       {
          scalar& xho = xh[o];
          xho = (1.0-designBoundaryBlend)*xho + designBoundaryBlend*1.0;

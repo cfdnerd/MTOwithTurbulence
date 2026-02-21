@@ -117,7 +117,7 @@ if (!primalTSingular && (!std::isfinite(tbInitRes) || !std::isfinite(tbFinalRes)
 }
 const volScalarField magTbSafe("magTbSafe", mag(TbSafe));
 const scalar tbSafeAvg = Foam::max(gAverage(magTbSafe.primitiveField()), 1e-8);
-const scalar tbHardCap = Foam::min(Foam::max(10.0*tbSafeAvg, 1e3), tbHardCapMax);
+const scalar tbHardCap = Foam::min(Foam::max(10.0*tbSafeAvg, tbHardCapMin), tbHardCapMax);
 forAll(Tb, cellI)
 {
     scalar& tv = Tb[cellI];

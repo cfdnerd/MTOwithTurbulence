@@ -40,7 +40,7 @@ raa0                1e-5;      // MMA regularization parameter
 mma_init            0.3;       // MMA asymptote initialization factor
 mma_dec             0.7;       // MMA asymptote decrease factor
 mma_inc             1.2;       // MMA asymptote increase factor
-movlim              0.2;       // MMA move limit (tighter = less gray, more stable; 0.2 for strong gray suppression)
+movlim              0.4;       // MMA move limit (larger = faster updates; 0.2 for gray suppression)
 
 // ========================================================================== //
 // 4. FILTER (structure and radii)                                            //
@@ -90,9 +90,10 @@ adjPseudoInvDtUb    40;        // Pseudo-transient inverse dt for Ub equation
 adjPseudoInvDtTb    100000;    // Pseudo-transient inverse dt for Tb (strong diagonal; higher = more stable)
 adjPseudoInvDtTurb  100;       // Pseudo-transient inverse dt for ka/omegaa equations
 
-tbPreSolveReset     1e3;       // Reset Tb to zero before solve if max|Tb| exceeds this
-tbHardCapMax        1e4;       // Upper bound on Tb hard cap (keeps Tb from exploding)
-tbRhsCapMax         1e6;       // Max |RHS source| per cell; scale down if exceeded (avoids FPE)
+tbPreSolveReset     1e5;       // Reset Tb to zero before solve if max|Tb| exceeds this
+tbHardCapMin        1e4;       // Lower bound on Tb hard cap floor (higher = less clipping, less gray)
+tbHardCapMax        1e5;      // Upper bound on Tb hard cap (keeps Tb from exploding)
+tbRhsCapMax         1e10;      // Max |RHS source| per cell; scale down if exceeded (avoids FPE)
 adjTbGradTgradTbCapMax 1e10;   // Cap |grad(T)·grad(Tb)| in ka/omegaa thermal source (objFunction=1)
 
 // ========================================================================== //

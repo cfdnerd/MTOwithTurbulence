@@ -69,6 +69,7 @@ scalar adjUaRhsCapCoeff(optProperties.lookupOrDefault<scalar>("adjUaRhsCapCoeff"
 scalar adjUaAllPassTbMax(optProperties.lookupOrDefault<scalar>("adjUaAllPassTbMax", 1e74));
 scalar adjUaHigherPassTbMax(optProperties.lookupOrDefault<scalar>("adjUaHigherPassTbMax", 1e60));
 scalar tbPreSolveReset(optProperties.lookupOrDefault<scalar>("tbPreSolveReset", 1e6));
+scalar tbHardCapMin(optProperties.lookupOrDefault<scalar>("tbHardCapMin", 1e4));
 scalar tbHardCapMax(optProperties.lookupOrDefault<scalar>("tbHardCapMax", 1e6));
 scalar tbRhsCapMax(optProperties.lookupOrDefault<scalar>("tbRhsCapMax", 1e12));
 scalar adjTbGradTgradTbCapMax(optProperties.lookupOrDefault<scalar>("adjTbGradTgradTbCapMax", 1e10));
