@@ -16,10 +16,17 @@ static char help[] = "topology optimization of fluid problem\n";
 
 int main(int argc, char *argv[])
 {
-    // Do not call MPI_Init here - OpenFOAM initializes MPI during setRootCase/startup.
-    // Calling MPI_Init explicitly causes "MPI_Init called twice" when run with mpirun.
-
     #include "setRootCase.H"
+    // Ensure MPI is initialized before opt_initialization (MMA constructor calls MPI_Allreduce).
+    // Some run configurations (job schedulers, non-mpirun) may not init MPI; guard against MPI_Allreduce-before-MPI_Init.
+    {
+        int mpiAlreadyInit = 0;
+        MPI_Initialized(&mpiAlreadyInit);
+        if (!mpiAlreadyInit)
+        {
+            MPI_Init(&argc, &argv);
+        }
+    }
     #include "createTime.H"
     #include "createMesh.H"
     #include "createControl.H"
