@@ -22,6 +22,37 @@ if(test_area)
       xh[cells_test[i]]=1.0;
    }
 }
+// Design-boundary blend: blend design cells adjacent to fluid_area toward xh=1 (smooth interface)
+if(fluid_area && designBoundaryBlend > 1e-12)
+{
+   const labelList& own = mesh.owner();
+   const labelList& nei = mesh.neighbour();
+   HashSet<label> fluidSet(cells_fluid.size());
+   forAll(cells_fluid, i) fluidSet.insert(cells_fluid[i]);
+   HashSet<label> solidSet;
+   if(solid_area) { solidSet.resize(cells_solid.size()); forAll(cells_solid, i) solidSet.insert(cells_solid[i]); }
+   HashSet<label> testSet;
+   if(test_area)  { testSet.resize(cells_test.size());  forAll(cells_test, i)  testSet.insert(cells_test[i]);  }
+   forAll(own, facei)
+   {
+      label o = own[facei];
+      label n = nei[facei];
+      bool oFluid = fluidSet.found(o);
+      bool nFluid = fluidSet.found(n);
+      bool nDesign = !fluidSet.found(n) && (!solid_area || !solidSet.found(n)) && (!test_area || !testSet.found(n));
+      bool oDesign = !fluidSet.found(o) && (!solid_area || !solidSet.found(o)) && (!test_area || !testSet.found(o));
+      if(oFluid && nDesign)
+      {
+         scalar& xhn = xh[n];
+         xhn = (1.0-designBoundaryBlend)*xhn + designBoundaryBlend*1.0;
+      }
+      else if(!oFluid && nFluid && oDesign)
+      {
+         scalar& xho = xh[o];
+         xho = (1.0-designBoundaryBlend)*xho + designBoundaryBlend*1.0;
+      }
+   }
+}
 xh.correctBoundaryConditions();
 xh = Foam::max(0.0, Foam::min(1.0, xh));
 xh.correctBoundaryConditions();
@@ -52,13 +83,18 @@ scalar alphaMaxMesh = 1e30;
   alphaMaxMesh = alphaMaxMeshFactor*max(nuEffVal, nu.value())/max(hChar*hChar, 1e-30);
   alphaMax.value() = Foam::min(alphaMax.value(), alphaMaxMesh);
 }
-if(opt>=80)
+if(opt>=quRampStart)
 {
-  qu=0.005+(opt-80)*1e-4;
+  qu=Foam::min(quInit+(opt-quRampStart)*quRampRate, quCap);
 }
-qu=Foam::min(qu,0.01);
+else
+{
+  qu=quInit;
+}
 // Adaptive xh floor: when design is solid-heavy (min xh low), raise floor to avoid alpha spikes and FPE
-scalar xhFloorVal = (xhMinVal < 0.15) ? 0.03 : ((xhMinVal < 0.05) ? 0.02 : 1e-3);
+// xhFloorTurbMult raises floor for turbulent flow (reduces Brinkman stiffness)
+scalar xhFloorBase = (xhMinVal < 0.15) ? 0.03 : ((xhMinVal < 0.05) ? 0.02 : 1e-3);
+scalar xhFloorVal = Foam::min(xhFloorBase * xhFloorTurbMult, 0.05);
 const volScalarField xhSafe(Foam::max(xh, scalar(xhFloorVal)));
 volScalarField alphaRaw(alphaMax*qu*(1-xhSafe)/(qu+xhSafe));
 scalar alphaCapVal = (xhMinVal < 0.15) ? Foam::min(scalar(3e3), alphaMaxMesh) : Foam::min(scalar(1e4), alphaMaxMesh);

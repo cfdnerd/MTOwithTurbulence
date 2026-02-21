@@ -7,8 +7,10 @@
     logSolverStats(runTime, "filter_x", 0, "xp", spXp, opt, runTime.timeName());
 }
 //***********************************//Heaviside_filter
-// Sharper Heaviside: 0.35*opt ramp, cap 150 (original MTO archive used del up to 200)
-del=Foam::min(0.35*opt, 150);
+// Turbulent tuning: gentler ramp, lower cap, delayed sharpening (heavisideDelFactor/Cap/Start/Init)
+del = (opt > heavisideDelStart)
+    ? Foam::min(heavisideDelFactor*(opt - heavisideDelStart), heavisideDelCap)
+    : heavisideDelInit;
 eta0=0.0001;
 eta1=1.0;
 y0=diff(xp,mesh.V(),del,eta0,n);

@@ -16,7 +16,7 @@ dimensionedScalar alphaMax(transportProperties.lookup("alphaMax"));
 dimensionedScalar alphaMAX(transportProperties.lookup("alphaMAX"));
 dimensionedScalar alphamax(transportProperties.lookup("alphaMax"));
 scalar alphaMaxMeshFactor(transportProperties.lookupOrDefault<scalar>("alphaMaxMeshFactor", 1e4));
-scalar qu(0.005);
+scalar qu(optProperties.lookupOrDefault<scalar>("quInit", 0.008));
 volScalarField alpha(alphaMax*qu*(1-xh)/(qu+xh)); 
 #include "createMRF.H"
 Info<< "Reading field p\n" << endl;

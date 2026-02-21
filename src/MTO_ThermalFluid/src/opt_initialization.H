@@ -16,7 +16,16 @@ N=x.size();//N:design freedom
 reduce(N, sumOp<scalar>()); 
 
 scalar V(0),area=gSum(mesh.V()),MeanT(0),PowerDiss(0),maxT(0),sumT(0);
-double len=std::pow(Foam::max(area/N, 1e-30), 1.0/3);
+double len = filterLenAniso
+    ? std::pow(Foam::max(area/N, 1e-30), 1.0/Foam::max(GeoDim, 1))
+    : std::pow(Foam::max(area/N, 1e-30), 1.0/3);
+if(filterTurbReScale)
+{
+    scalar Uref = Foam::max(gAverage(mag(U.primitiveField())), 1e-12);
+    scalar Re = Foam::max(Uref*len/nu.value(), 1e-6);
+    scalar turbScale = Foam::max(Foam::min(Foam::sqrt(Re_ref/Re), 2.0), 0.5);
+    len *= turbScale;
+}
 double denomSq1 = Foam::max(filterR*len/3.464, 1e-30);
 double denomSq2 = Foam::max(filterR2*len/3.464, 1e-30);
 b.value()=1.0/(denomSq1*denomSq1);

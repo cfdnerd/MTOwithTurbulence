@@ -29,6 +29,20 @@ dimensionedScalar b("b", dimensionSet(0,-2,0,0,0,0,0),1.0);//filter coeff stage 
 dimensionedScalar bFilter2("bFilter2", dimensionSet(0,-2,0,0,0,0,0),1.0);//filter coeff stage 2 (cascaded)
 dimensionedScalar b1("b1", dimensionSet(0,2,-2,-2,0,0,0),1.0);
 Switch useCascadedFilter(optProperties.lookupOrDefault<Switch>("useCascadedFilter", Switch(false)));  // false = legacy (less gray)
+// Legacy filter turbulence tuning (optProperties)
+scalar heavisideDelFactor(optProperties.lookupOrDefault<scalar>("heavisideDelFactor", 0.28));
+scalar heavisideDelCap(optProperties.lookupOrDefault<scalar>("heavisideDelCap", 120.0));
+label heavisideDelStart(optProperties.lookupOrDefault<label>("heavisideDelStart", 50));
+scalar heavisideDelInit(optProperties.lookupOrDefault<scalar>("heavisideDelInit", 5.0));
+Switch filterLenAniso(optProperties.lookupOrDefault<Switch>("filterLenAniso", Switch(true)));
+Switch filterTurbReScale(optProperties.lookupOrDefault<Switch>("filterTurbReScale", Switch(false)));
+scalar Re_ref(optProperties.lookupOrDefault<scalar>("Re_ref", 1000.0));
+scalar xhFloorTurbMult(optProperties.lookupOrDefault<scalar>("xhFloorTurbMult", 1.5));
+scalar quInit(optProperties.lookupOrDefault<scalar>("quInit", 0.008));
+label quRampStart(optProperties.lookupOrDefault<label>("quRampStart", 100));
+scalar quRampRate(optProperties.lookupOrDefault<scalar>("quRampRate", 8e-5));
+scalar quCap(optProperties.lookupOrDefault<scalar>("quCap", 0.012));
+scalar designBoundaryBlend(optProperties.lookupOrDefault<scalar>("designBoundaryBlend", 0.08));
 Switch solid_area(optProperties.lookup("solid_area"));
 Switch fluid_area(optProperties.lookup("fluid_area"));
 Switch test_area(optProperties.lookup("test_area"));

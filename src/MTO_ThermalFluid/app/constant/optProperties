@@ -15,47 +15,89 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// ========================= Optimization / MMA ========================= //
-// useCascadedFilter: no = legacy single-stage; yes = cascaded (use with filterStage2Nonlinear for gray suppression)
-useCascadedFilter   yes;       // yes + filterStage2Nonlinear yes = cascaded fW-mean (gray suppression)
+// ========================================================================== //
+// 1. DESIGN REGION                                                           //
+// ========================================================================== //
+fluid_area          yes;       // Keep fluid-designated zone fixed as fluid
+solid_area          no;        // Keep solid-designated zone fixed as solid
+test_area           no;        // Enable test-zone initialization override
+
+// ========================================================================== //
+// 2. OBJECTIVE & CONSTRAINTS                                                 //
+// ========================================================================== //
+objFunction         1;         // 1: mean temperature, 2: p-norm max temperature
+PowerDiss0          1e-8;      // Reference dissipation for normalization
+PowerDissMax        10;        // Max allowed power dissipation constraint
+PowerDissRelax      25;        // Dissipation constraint relaxation window
+voluse              0.4;       // Target volume fraction
+GeoDim              2;         // Geometric dimension (affects filter length scale)
+Pnorm               300;       // p-norm exponent for max-temperature approximation (objFunction=2)
+
+// ========================================================================== //
+// 3. MMA OPTIMIZER                                                           //
+// ========================================================================== //
 raa0                1e-5;      // MMA regularization parameter
-voluse              0.4;       // Target initial/constraint volume fraction
 mma_init            0.3;       // MMA asymptote initialization factor
 mma_dec             0.7;       // MMA asymptote decrease factor
 mma_inc             1.2;       // MMA asymptote increase factor
-movlim              0.3;       // MMA move limit (0.3 = smoother evolution; does not cause gray)
+movlim              0.25;      // MMA move limit (0.25 for turbulent; tighter = more stable)
+
+// ========================================================================== //
+// 4. FILTER (structure and radii)                                            //
+// ========================================================================== //
+// useCascadedFilter: no = legacy single-stage; yes = cascaded (use with filterStage2Nonlinear for gray suppression)
+useCascadedFilter   yes;       // yes + filterStage2Nonlinear yes = cascaded fW-mean (gray suppression)
 filterR             2.2;       // Stage 1 filter radius (larger = smoother but MORE gray; keep moderate)
-filterR2            1.6;       // Stage 2 radius (linear mode); used for PDE kernel in nonlinear mode
+filterR2            1.6;       // Stage 2 radius (linear mode); PDE kernel radius (nonlinear mode)
 filterStage2Nonlinear yes;     // yes = fW-mean power stage (gray suppression); no = linear PDE (more gray)
 filterPMean         4;         // fW-mean exponent p (p>1 sharpens; 4–8 typical; 2=mild, 16=strong)
 
-// ========================= Objective / Constraint ===================== //
-PowerDiss0          1e-8;     // Reference dissipation for normalization
-PowerDissMax        10;        // Max allowed power dissipation constraint
-PowerDissRelax      25;        // Dissipation constraint relaxation window
-GeoDim              2;         // Geometric dimension flag
-Pnorm               300;       // p-norm exponent for max-temperature approximation
-objFunction         1;         // 1: mean temperature, 2: p-norm max temperature
+// Filter length scale (affects both legacy and cascaded)
+filterLenAniso      yes;       // yes = geometric-mean len for channel mesh; no = volume-based
+filterTurbReScale   no;        // yes = scale filterR by (Re_ref/Re)^0.5 for high-Re
+Re_ref              1000;      // Reference Re for filter scaling (when filterTurbReScale yes)
 
-// ========================= Design Region Controls ===================== //
-fluid_area          yes;       // Keep fluid-designated zone fixed as fluid
-solid_area          no;        // Keep solid-designated zone fixed as solid
-test_area           no;       // Enable test-zone initialization override
+// ========================================================================== //
+// 5. HEAVISIDE PROJECTION                                                    //
+// ========================================================================== //
+// (Legacy filter; cascaded uses same for its Heaviside stage)
+heavisideDelFactor  0.28;      // Heaviside ramp factor (0.25-0.3 for turbulent; was 0.35 laminar)
+heavisideDelCap     120;       // Heaviside sharpness cap (100-120 for turbulent; was 150)
+heavisideDelStart   50;        // Iteration to start sharpening (delay for turbulent stability)
+heavisideDelInit    5;         // Initial del when opt<=heavisideDelStart (gentle)
 
-// ========================= Adjoint Coupling =========================== //
+// ========================================================================== //
+// 6. BRINKMAN & DENSITY PROJECTION                                           //
+// ========================================================================== //
+quInit              0.008;     // Initial qu (larger = less stiff; was 0.005)
+quRampStart         100;       // Iteration to start qu ramp (was 80)
+quRampRate          8e-5;      // qu increment per opt (slower than 1e-4)
+quCap               0.012;     // qu cap (was 0.01)
+xhFloorTurbMult     1.5;       // Multiplier on xh floor for turbulent (1=laminar; 1.5=turbulent)
+designBoundaryBlend 0.08;      // Blend design cells adj to fluid toward 1 (0=off; 0.05-0.1 typical)
+
+// ========================================================================== //
+// 7. ADJOINT: COUPLING                                                       //
+// ========================================================================== //
 nAdjTurbPasses      2;         // Number of adjoint turbulence coupling passes per opt step
 turbSensDamp        0;         // Sensitivity damping for turbulence source contribution
 
-// ========================= Robust Adjoint Framework =================== //
+// ========================================================================== //
+// 8. ADJOINT: PSEUDO-TRANSIENT & ROBUSTNESS                                  //
+// ========================================================================== //
 adjPseudoInvDtUa    50;        // Pseudo-transient inverse dt for Ua equation
 adjPseudoInvDtUb    40;        // Pseudo-transient inverse dt for Ub equation
-adjPseudoInvDtTb    100000;    // Pseudo-transient inverse dt for Tb (strong diagonal dominance to avoid FPE; higher = more stable)
-tbPreSolveReset     1e3;       // Reset Tb to zero before solve if max|Tb| exceeds this (avoids ill-conditioned matrix)
-tbHardCapMax        1e4;       // Upper bound on Tb hard cap (keeps Tb from exploding)
-tbRhsCapMax         1e6;       // Max |RHS source| per cell; scale down if exceeded (avoids FPE in iterative solvers)
-adjTbGradTgradTbCapMax 1e10;   // Cap |grad(T)·grad(Tb)| in ka/omegaa thermal source (objFunction=1) to avoid blow-up
+adjPseudoInvDtTb    100000;    // Pseudo-transient inverse dt for Tb (strong diagonal; higher = more stable)
 adjPseudoInvDtTurb  100;       // Pseudo-transient inverse dt for ka/omegaa equations
 
+tbPreSolveReset     1e3;       // Reset Tb to zero before solve if max|Tb| exceeds this
+tbHardCapMax        1e4;       // Upper bound on Tb hard cap (keeps Tb from exploding)
+tbRhsCapMax         1e6;       // Max |RHS source| per cell; scale down if exceeded (avoids FPE)
+adjTbGradTgradTbCapMax 1e10;   // Cap |grad(T)·grad(Tb)| in ka/omegaa thermal source (objFunction=1)
+
+// ========================================================================== //
+// 9. ADJOINT: CONTINUATION (turbulence & heat)                               //
+// ========================================================================== //
 adjTurbBetaMin      0.2;       // Initial turbulence-adjoint continuation factor
 adjTurbRampStart    1;         // Iteration to start turbulence-adjoint beta ramp
 adjTurbRampEnd      80;        // Iteration to finish turbulence-adjoint beta ramp
@@ -64,17 +106,23 @@ adjTurbLagEvery     2;         // Solve turbulence adjoint every N opt iteration
 adjHeatBetaMin      0.1;       // Initial heat-adjoint continuation factor for Ub source
 adjHeatRampStart    1;         // Iteration to start heat-adjoint beta ramp
 adjHeatRampEnd      220;       // Iteration to finish heat-adjoint beta ramp
+
+// ========================================================================== //
+// 10. ADJOINT: Ua ROBUSTNESS                                                 //
+// ========================================================================== //
 adjUaPassDecay      0.35;      // Extra Ua-source damping factor applied per adjoint pass (>0)
 adjUaPassMinGain    0.10;      // Minimum Ua-source gain floor for later adjoint passes
 adjUaLocalCapCoeff  200;       // Local Ua-source cap coefficient on U^2/L convective scale
 adjUaRhsCapCoeff    200;       // Global Ua RHS cap coefficient on U^2/L convective scale
-adjUaAllPassTbMax   1e6;       // Skip Ua update (any pass) if |Tb| exceeds this hard trust limit (decouple when Tb bad)
+adjUaAllPassTbMax   1e6;       // Skip Ua update (any pass) if |Tb| exceeds this (decouple when Tb bad)
 adjUaHigherPassTbMax 1e5;      // Skip higher-pass Ua update if |Tb| exceeds this trust threshold
 
-// ========================= Runtime Diagnostics ======================== //
+// ========================================================================== //
+// 11. RUNTIME DIAGNOSTICS                                                    //
+// ========================================================================== //
 diagLevel           0;         // 0: off, 1: metrics, 2: full field-health logs
 diagEvery           1;         // Log diagnostics every N optimization iterations
 diagRank            -1;        // -1: all ranks, otherwise selected MPI rank only
-diagOptStart        120;         // First optimization iteration to begin diagnostics
+diagOptStart        120;       // First optimization iteration to begin diagnostics
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //  
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
