@@ -27,8 +27,10 @@ else
     SolverPerformance<scalar> spXp = xpEqn.solve();
     logSolverStats(runTime, "filter_x", 1, "xp", spXp, opt, runTime.timeName());
 }
-//***********************************//Heaviside projection (sharper ramp for cascaded)
-del=Foam::min(0.4*opt, 200);
+//***********************************//Heaviside projection (turbulence-tuned: delayed sharpening, gentler ramp, lower cap)
+del = (opt > heavisideDelStart)
+    ? Foam::min(heavisideDelFactor*(opt - heavisideDelStart), heavisideDelCap)
+    : heavisideDelInit;
 eta0=0.0001;
 eta1=1.0;
 y0=diff(xp,mesh.V(),del,eta0,n);
