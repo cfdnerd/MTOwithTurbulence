@@ -6,7 +6,7 @@
     volScalarField tmpG(mag(gsenshPowerDiss));
     if(solid_area) { forAll(cells_solid,i) { tmpF[cells_solid[i]]=0; tmpG[cells_solid[i]]=0; } }
     if(fluid_area) { forAll(cells_fluid,i) { tmpF[cells_fluid[i]]=0; tmpG[cells_fluid[i]]=0; } }
-    if(test_area)  { forAll(cells_test,i)  { tmpF[cells_test[i]]=0;  tmpG[cells_test[i]]=0;  } }
+    // Reference: do not exclude test_area from normalization; test zone participates in design
     const scalar sensFloor = 1e-12;
     scalar maxF = Foam::max(gMax(tmpF), sensFloor);
     scalar maxG = Foam::max(gMax(tmpG), sensFloor);
@@ -33,15 +33,7 @@ if(fluid_area)
       gsenshVol[cells_fluid[i]] = 0;
    }
 }
-if(test_area)
-{
-   forAll(cells_test, i)
-   {
-      fsenshMeanT[cells_test[i]] = 0;
-      gsenshPowerDiss[cells_test[i]] = 0;
-      gsenshVol[cells_test[i]] = 0;
-   }
-}
+// Reference: do not zero test_area sensitivities; test zone participates in MMA update
 //***********************************//Heaviside chain rule: dJ/dxh -> dJ/dxp
 if(opt>1)
 {

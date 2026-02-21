@@ -87,7 +87,8 @@ if (!accepted)
         x[i] = xOld[i];
     }
 }
-// Restore design variable in fixed zones (MMA updates all cells; filter needs correct x in solid/fluid/test)
+// Restore design variable in fixed zones (MMA updates all cells; filter needs correct x in solid/fluid)
+// Reference convention: do NOT restore x[test]; test zone follows MMA output, then filter (like reference Heaviside_rho)
 if(solid_area)
 {
     forAll(cells_solid, i) { x[cells_solid[i]] = 0; }
@@ -95,10 +96,6 @@ if(solid_area)
 if(fluid_area)
 {
     forAll(cells_fluid, i) { x[cells_fluid[i]] = 1.0; }
-}
-if(test_area)
-{
-    forAll(cells_test, i) { x[cells_test[i]] = 1.0; }
 }
 
 if(useCascadedFilter)
