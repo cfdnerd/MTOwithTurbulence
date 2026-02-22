@@ -133,19 +133,23 @@ inline void storeMeshFilterHeaderContent
     os << "# ================================================================================\n";
     os << "# MTO_ThermalFluid - Mesh & Filter Estimates (deferred write at opt 1)\n";
     os << "# ================================================================================\n";
-    os << "# Mesh:  nCells " << nCell << "  area " << area << "  N_design " << N
+    os << "Mesh:  nCells " << nCell << "  area " << area << "  N_design " << N
        << "  h_char " << hChar << "  len_cell " << lenCell << "\n";
-    os << "# Filter:  len " << len << "  filterR " << filterR << "  filterR2 " << filterR2
+    os << "Filter:  len " << len << "  filterR " << filterR << "  filterR2 " << filterR2
        << "  GeoDim " << GeoDim << "\n";
-    os << "# Filter radius (physical):  stage1 " << radius1 << "  stage2 " << radius2
+    os << "  (len = characteristic filter length scale [m]; physical radius = filterR*len)\n";
+    os << "Filter radius (physical):  stage1 " << radius1 << "  stage2 " << radius2
        << "  (~" << cellsInRadius1 << ", " << cellsInRadius2 << " cells)\n";
-    os << "# Suggested filterR for mesh (less gray):  " << filterR_suggested_min
+    os << "Suggested filterR for mesh (less gray):  " << filterR_suggested_min
        << " ... " << filterR_suggested_max << "  (rule-of-thumb: 2-3 cell radii)\n";
     os << "# --------------------------------------------------------------------------------\n";
     os << "# Turbulence mesh criteria (RAS k-omega SST):\n";
-    os << "#   Re_est " << Re_est << "  (U_ref*len/nu)\n";
-    os << "#   y+ < 5 wall-resolved:  first cell delta_y < 50*nu/U_bulk (approx)\n";
-    os << "#   Turb. length scale l_t ~ 0.07*L:  resolve with h < l_t/2 for boundary layers\n";
+    os << "  Re_est " << Re_est
+       << "  | U_ref*len/nu at design-cell scale; bulk Re uses channel Dh instead\n";
+    os << "  y+ < 5 wall-resolved:  first cell delta_y < 50*nu/U_bulk (approx)\n";
+    os << "    | delta_y in wall-normal dir; for fully resolved BL use h < l_t/2 below\n";
+    os << "  Turbulent length scale l_t ~ 0.07*L (L=BL thickness or channel half-height)\n";
+    os << "    | Resolve boundary layers with cell size h < l_t/2 to capture shear\n";
     os << "# ================================================================================\n\n";
 
     MTOsolverStatus::meshFilterHeaderContent = os.str();
