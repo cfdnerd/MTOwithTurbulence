@@ -31,15 +31,31 @@ solvers
     {
         solver          smoothSolver;
         smoother        GaussSeidel;
-        nSweeps         16;     // Primal momentum: enhanced for better convergence and residuals
+        nSweeps         40;     // Drive Primal U residuals below 1e-8 (was 16, finalRes~2.8e-7)
         tolerance       1e-8;
-        relTol          0.05;   // Relaxed to help U reach convergence flag
+        relTol          0.01;
     }
-    "(Ua|Ub|Uc|k|omega|ka|omegaa|epsilon)"
+    Ua
     {
         solver          smoothSolver;
         smoother        GaussSeidel;
-        nSweeps         8;      // Adjoint/turbulence momentum
+        nSweeps         16;     // Adjoint momentum: more sweeps for better residuals
+        tolerance       1e-5;
+        relTol          0.05;
+    }
+    "(ka|omegaa)"
+    {
+        solver          smoothSolver;
+        smoother        GaussSeidel;
+        nSweeps         12;     // Adjoint turbulence: improved convergence
+        tolerance       1e-5;
+        relTol          0.05;
+    }
+    "(Ub|Uc|k|omega|epsilon)"
+    {
+        solver          smoothSolver;
+        smoother        GaussSeidel;
+        nSweeps         8;      // Other adjoint/turbulence
         tolerance       1e-8;
         relTol          0.03;
     }
