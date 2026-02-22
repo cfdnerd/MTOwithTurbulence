@@ -4,7 +4,7 @@ volScalarField alphaEff(DT + turbulence->nut()/Prt);
 // Floor alphaEff to bound thermal matrix condition number (avoids FPE in iterative solvers)
 {
     scalar aEffAvg = gAverage(alphaEff.primitiveField());
-    scalar aEffFloor = Foam::max(1e-6*aEffAvg, 1e-12);
+    scalar aEffFloor = Foam::max(1e-6*aEffAvg, 1e-10);  // 1e-10 for fine-mesh Tb stability
     alphaEff = max(alphaEff, dimensionedScalar("aEffFloor", alphaEff.dimensions(), aEffFloor));
 }
 fvScalarMatrix TEqn

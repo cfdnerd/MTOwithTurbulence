@@ -73,6 +73,8 @@ useDesignBoundaryBlend   no;        // yes = blend design cells adjacent to flui
 // ========================================================================== //
 nAdjTurbPasses      3;         // Adjoint turbulence passes per opt step; 1=faster, 2+=better coupling (cost scales with passes)
 turbSensDamp        0;         // Turbulence sensitivity damping; 0=off, >0=stabilizes k/omega contribution (may reduce accuracy)
+adjPseudoInvDtTb    5e5;       // Tb diagonal stabilization; higher = more robust on fine mesh (default 1e5)
+tbPreSolveReset     1e4;       // Reset Tb to zero if |Tb| > this (catch blow-up earlier; default 1e6)
 
 // ========================================================================== //
 // 8. RUNTIME DIAGNOSTICS (Primal & Adjoint field health; see docs/ADJOINT_OPTIONS_FOR_CONVERGENCE.md)

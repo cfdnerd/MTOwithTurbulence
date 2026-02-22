@@ -90,11 +90,12 @@ solvers
     }
     Tb
     {
-        solver          PBiCGStab;
-        preconditioner  DILU;
-        tolerance       1e-6;   // Drive Tb residual below 1e-6
-        relTol          0.01;
-        maxIter         2000;
+        solver          GAMG;
+        smoother        DICGaussSeidel;
+        tolerance       1e-4;   // Relaxed for fine-mesh stability; GAMG more robust than PBiCGStab
+        relTol          0.05;
+        maxIter         500;    // Fail-fast if diverging; AdjointHeat_Tb clips/resets
+        nCellsInCoarsestLevel 10;
     }
     Ta
     {
@@ -136,7 +137,7 @@ relaxationFactors
         "(U|Ua|Ub|Uc)"     0.6;  // Slightly tighter for Ua, ka, omegaa stability
         "(k|omega|ka|omegaa|epsilon)"   0.6;
         T                 0.9;
-        "(Ta|Tb)"         0.5;
+        "(Ta|Tb)"         0.2;   // Reduced for fine-mesh Tb stability (was 0.5; blow-up at 6e+100)
     }
 }
 constraintFunctionDict_flow
