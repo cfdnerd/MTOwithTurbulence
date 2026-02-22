@@ -50,8 +50,8 @@ movlim              0.4;       // MMA move limit (larger = faster updates; 0.2 f
 filterLenAniso      yes;       // yes = geometric-mean len for channel mesh; no = volume-based
 filterTurbReScale   no;        // yes = scale filterR by (Re_ref/Re)^0.5 for high-Re (legacy path)
 Re_ref              1000;      // Reference Re for filter scaling (when filterTurbReScale yes)
-// Heaviside projection (legacy filter; cascaded uses same for its Heaviside stage)
-heavisideGraySuppression  legacy;  // legacy|low|medium|high|strong; legacy=parent MTO new_2022.12.15 (del=min(0.2*opt,100)); override with heavisideDelFactor/Cap/Start/Init if needed
+heavisideGraySuppression  legacy;	// Heaviside projection (legacy filter; cascaded uses same for its Heaviside stage)
+// legacy|low|medium|high|strong; legacy=parent MTO new_2022.12.15 (del=min(0.2*opt,100)); override with heavisideDelFactor/Cap/Start/Init if needed
 
 // ========================================================================== //
 // 5. CASCADED FILTER                                                         //
