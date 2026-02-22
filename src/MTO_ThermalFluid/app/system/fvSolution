@@ -134,7 +134,8 @@ relaxationFactors
     }
     equations
     {
-        "(U|Ua|Ub|Uc)"     0.6;  // Slightly tighter for Ua, ka, omegaa stability
+        U                  0.4;  // Primal U: lower for stability
+        "(Ua|Ub|Uc)"       0.6;  // Adjoint momentum
         "(k|omega|ka|omegaa|epsilon)"   0.6;
         T                 0.9;
         "(Ta|Tb)"         0.2;   // Reduced for fine-mesh Tb stability (was 0.5; blow-up at 6e+100)
