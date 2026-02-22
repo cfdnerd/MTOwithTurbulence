@@ -71,7 +71,7 @@ useDesignBoundaryBlend   no;        // yes = blend design cells adjacent to flui
 // ========================================================================== //
 // 7. ADJOINT: COUPLING                                                       //
 // ========================================================================== //
-nAdjTurbPasses      2;         // Adjoint turbulence passes per opt step; 1=faster, 2+=better coupling (cost scales with passes)
+nAdjTurbPasses      3;         // Adjoint turbulence passes per opt step; 1=faster, 2+=better coupling (cost scales with passes)
 turbSensDamp        0;         // Turbulence sensitivity damping; 0=off, >0=stabilizes k/omega contribution (may reduce accuracy)
 
 // ========================================================================== //

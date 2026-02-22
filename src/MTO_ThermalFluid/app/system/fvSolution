@@ -31,23 +31,25 @@ solvers
     {
         solver          smoothSolver;
         smoother        GaussSeidel;
-        nSweeps         40;     // Drive Primal U residuals below 1e-8 (was 16, finalRes~2.8e-7)
+        nSweeps         40;     // Drive Primal U residuals below 1e-8
+        maxIter         1000;   // Ensure smoothSolver can iterate until converged (fixes conv=0)
         tolerance       1e-8;
         relTol          0.01;
     }
     Ua
     {
-        solver          smoothSolver;
-        smoother        GaussSeidel;
-        nSweeps         16;     // Adjoint momentum: more sweeps for better residuals
+        solver          PBiCGStab;
+        preconditioner  DILU;
         tolerance       1e-5;
         relTol          0.05;
+        maxIter         500;    // Krylov solver for adjoint momentum: better convergence than smoothSolver
     }
     "(ka|omegaa)"
     {
         solver          smoothSolver;
         smoother        GaussSeidel;
-        nSweeps         12;     // Adjoint turbulence: improved convergence
+        nSweeps         24;     // Adjoint turbulence: more sweeps for better residuals
+        maxIter         500;    // Allow iteration until converged
         tolerance       1e-5;
         relTol          0.05;
     }
@@ -103,8 +105,8 @@ relaxationFactors
     }
     equations
     {
-        "(U|Ua|Ub|Uc)"     0.7;
-        "(k|omega|ka|omegaa|epsilon)"   0.7;
+        "(U|Ua|Ub|Uc)"     0.6;  // Slightly tighter for Ua, ka, omegaa stability
+        "(k|omega|ka|omegaa|epsilon)"   0.6;
         T                 0.9;
         "(Ta|Tb)"         0.5;
     }
