@@ -75,12 +75,12 @@ nAdjTurbPasses      2;         // Adjoint turbulence passes per opt step; 1=fast
 turbSensDamp        0;         // Turbulence sensitivity damping; 0=off, >0=stabilizes k/omega contribution (may reduce accuracy)
 
 // ========================================================================== //
-// 8. RUNTIME DIAGNOSTICS (adjoint sections 8-10 pruned; see docs/ADJOINT_OPTIONS_FOR_CONVERGENCE.md)
+// 8. RUNTIME DIAGNOSTICS (Primal & Adjoint field health; see docs/ADJOINT_OPTIONS_FOR_CONVERGENCE.md)
 // ========================================================================== //
-diagLevel           0;         // 0: off, 1: metrics, 2: full field-health logs
+diagLevel           2;         // 0: off, 1: metrics, 2: full field-health (U,p,T,Ua,pa,Ub,pb,Tb,ka,omegaa)
 diagEvery           1;         // Log diagnostics every N optimization iterations
 diagRank            -1;        // -1: all ranks, otherwise selected MPI rank only
-diagOptStart        120;       // First optimization iteration to begin diagnostics
+diagOptStart        1;         // First optimization iteration to begin diagnostics (1=from start)
 writeMeshFilterHeader yes;     // Write mesh/filter estimates to solver_status.log at opt 1
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

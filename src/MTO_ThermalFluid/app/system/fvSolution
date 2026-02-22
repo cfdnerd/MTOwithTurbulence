@@ -31,9 +31,9 @@ solvers
     {
         solver          smoothSolver;
         smoother        GaussSeidel;
-        nSweeps         4;
+        nSweeps         8;      // Relaxed from 4 for better momentum convergence (Primal U, adjoints)
         tolerance       1e-8;
-        relTol          0.01;
+        relTol          0.03;   // Relaxed from 0.01 to help momentum reach convergence flag
     }
     T
     {

@@ -154,5 +154,9 @@ phi.storePrevIter();
 
 }
 
+// Field health logging for Primal U and p (diagLevel 2)
+MTOdiag::logVectorFieldHealth(runTime, opt, "Primal_U", "U", U.primitiveField());
+MTOdiag::logScalarFieldHealth(runTime, opt, "Primal_U", "p", p.primitiveField());
+
 
 

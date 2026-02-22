@@ -28,4 +28,6 @@ if (spT.singular() || !std::isfinite(spT.initialResidual()) || !std::isfinite(sp
     T = T2;
     Info<< "Primal_T: singularity or non-finite residual; restored T from previous state." << endl;
 }
+// Field health logging for Primal T (diagLevel 2)
+MTOdiag::logScalarFieldHealth(runTime, opt, "Primal_T", "T", T.primitiveField());
 

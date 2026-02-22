@@ -96,5 +96,8 @@
         SolverPerformance<scalar> spOmegaa = omegaaEqn.solve();
         logSolverStats(runTime, "Adjoint_kOmegaSST", 0, "omegaa", spOmegaa, opt, runTime.timeName());
         MTOdiag::logMetric(runTime, opt, "Adjoint_kOmegaSST", "turbAdjBeta", turbAdjBeta);
+        // Field health for adjoint turbulence (diagLevel 2)
+        MTOdiag::logScalarFieldHealth(runTime, opt, "Adjoint_kOmegaSST", "ka", ka.primitiveField());
+        MTOdiag::logScalarFieldHealth(runTime, opt, "Adjoint_kOmegaSST", "omegaa", omegaa.primitiveField());
     }
 }
