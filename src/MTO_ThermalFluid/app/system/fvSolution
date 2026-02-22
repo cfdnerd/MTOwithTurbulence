@@ -27,13 +27,21 @@ solvers
         nCellsInCoarsestLevel 10;
     }
 
-    "(U|Ua|Ub|Uc|k|omega|ka|omegaa|epsilon)"
+    U
     {
         solver          smoothSolver;
         smoother        GaussSeidel;
-        nSweeps         8;      // Relaxed from 4 for better momentum convergence (Primal U, adjoints)
+        nSweeps         16;     // Primal momentum: enhanced for better convergence and residuals
         tolerance       1e-8;
-        relTol          0.03;   // Relaxed from 0.01 to help momentum reach convergence flag
+        relTol          0.05;   // Relaxed to help U reach convergence flag
+    }
+    "(Ua|Ub|Uc|k|omega|ka|omegaa|epsilon)"
+    {
+        solver          smoothSolver;
+        smoother        GaussSeidel;
+        nSweeps         8;      // Adjoint/turbulence momentum
+        tolerance       1e-8;
+        relTol          0.03;
     }
     T
     {
