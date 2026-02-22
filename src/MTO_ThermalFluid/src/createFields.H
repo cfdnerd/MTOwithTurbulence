@@ -76,7 +76,7 @@ scalar quCap(0.012);
 Switch useDesignBoundaryBlend(Switch(false));
 scalar designBoundaryBlend(0.08);
 {
-    word preset(optProperties.lookupOrDefault<word>("brinkmanGraySuppression", "moderate"));
+    word preset(optProperties.lookupOrDefault<word>("brinkmanGraySuppression", "off"));
     if (preset == "off")
     {
         xhFloorTurbMult = 1.0; quInit = 0.005; quRampStart = 80; quRampRate = 1e-4; quCap = 0.02;
