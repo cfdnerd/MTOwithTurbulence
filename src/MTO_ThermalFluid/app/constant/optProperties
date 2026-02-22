@@ -80,7 +80,7 @@ turbSensDamp        0;         // Turbulence sensitivity damping; 0=off, >0=stab
 diagLevel           2;         // 0: off, 1: metrics, 2: full field-health (U,p,T,Ua,pa,Ub,pb,Tb,ka,omegaa)
 diagEvery           1;         // Log diagnostics every N optimization iterations
 diagRank            -1;        // -1: all ranks, otherwise selected MPI rank only
-diagOptStart        1;         // First optimization iteration to begin diagnostics (1=from start)
+diagOptStart        120;       // First optimization iteration to begin solver_diagnostics logging
 writeMeshFilterHeader yes;     // Write mesh/filter estimates to solver_status.log at opt 1
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
