@@ -22,7 +22,7 @@ yMin 0;
 yMax 4.65;
 zMin -0.003;
 zMax 0;
-xD 1.25;  // symmetric half-domain: inlet width = xMax-xD = 0.1 = 1 mm (half of 2 mm full inlet)
+xD 1.25;  // symmetric half-domain: inlet width = xMax-xD = 0.4 = 4 mm half (8 mm full inlet port)
 yDMin -0.8;
 yDMax 5.45;
 

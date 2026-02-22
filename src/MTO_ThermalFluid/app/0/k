@@ -12,26 +12,26 @@ FoamFile
 
 dimensions      [0 2 -2 0 0 0 0];
 
-internalField   uniform 1e-6;
+internalField   uniform 0.00375;
 
 boundaryField
 {
     inlet
     {
         type            fixedValue;
-        value           uniform 1e-6;
+        value           uniform 0.00375;  // k = 1.5*(U*I)^2, U=1 m/s, I=5%, Dh=8mm
     }
 
     outlet
     {
         type            inletOutlet;
-        inletValue      uniform 1e-6;
+        inletValue      uniform 0.00375;
     }
 
     Wall
     {
         type            kqRWallFunction;
-        value           uniform 1e-6;
+        value           uniform 0.00375;
     }
 
     right

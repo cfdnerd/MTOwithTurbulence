@@ -23,7 +23,7 @@ boundaryField
     inlet
     {
         type            fixedValue;
-        value           uniform (0 -1 0);  // 1 m/s inlet velocity
+        value           uniform (0 -1 0);  // 1 m/s inlet (8 mm port, Re~8000)
     }
 
     outlet

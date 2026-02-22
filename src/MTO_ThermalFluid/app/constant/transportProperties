@@ -17,6 +17,7 @@ FoamFile
 
 transportModel  Newtonian;
 
+// Case: U=1 m/s, Dh=8 mm, nu=1e-6 -> Re=8000 (turbulent)
 nu                           nu [0 2 -1 0 0 0 0] 1.0e-6;
 alphaMax               alphaMax [0 0 -1 0 0 0 0] 2.5e3;
 alphaMAX               alphaMAX [0 0 -1 0 0 0 0] 5e4;
