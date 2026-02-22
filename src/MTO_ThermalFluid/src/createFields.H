@@ -67,13 +67,50 @@ heavisideDelInit    = optProperties.lookupOrDefault<scalar>("heavisideDelInit", 
 Switch filterLenAniso(optProperties.lookupOrDefault<Switch>("filterLenAniso", Switch(true)));
 Switch filterTurbReScale(optProperties.lookupOrDefault<Switch>("filterTurbReScale", Switch(false)));
 scalar Re_ref(optProperties.lookupOrDefault<scalar>("Re_ref", 1000.0));
-scalar xhFloorTurbMult(optProperties.lookupOrDefault<scalar>("xhFloorTurbMult", 1.5));
-scalar quInit(optProperties.lookupOrDefault<scalar>("quInit", 0.008));
-label quRampStart(optProperties.lookupOrDefault<label>("quRampStart", 100));
-scalar quRampRate(optProperties.lookupOrDefault<scalar>("quRampRate", 8e-5));
-scalar quCap(optProperties.lookupOrDefault<scalar>("quCap", 0.012));
-Switch useDesignBoundaryBlend(optProperties.lookupOrDefault<Switch>("useDesignBoundaryBlend", Switch(false)));
-scalar designBoundaryBlend(optProperties.lookupOrDefault<scalar>("designBoundaryBlend", 0.08));
+// Brinkman/density projection: preset (laminar|mild|moderate|aggressive|strong) or per-param overrides
+scalar xhFloorTurbMult(1.5);
+scalar quInit(0.008);
+label quRampStart(100);
+scalar quRampRate(8e-5);
+scalar quCap(0.012);
+Switch useDesignBoundaryBlend(Switch(false));
+scalar designBoundaryBlend(0.08);
+{
+    word preset(optProperties.lookupOrDefault<word>("brinkmanGraySuppression", "moderate"));
+    if (preset == "laminar")
+    {
+        xhFloorTurbMult = 1.0; quInit = 0.01; quRampStart = 120; quRampRate = 5e-5; quCap = 0.01;
+        useDesignBoundaryBlend = Switch(false); designBoundaryBlend = 0.05;
+    }
+    else if (preset == "mild")
+    {
+        xhFloorTurbMult = 1.2; quInit = 0.009; quRampStart = 110; quRampRate = 6e-5; quCap = 0.011;
+        useDesignBoundaryBlend = Switch(false); designBoundaryBlend = 0.06;
+    }
+    else if (preset == "moderate")
+    {
+        xhFloorTurbMult = 1.5; quInit = 0.008; quRampStart = 100; quRampRate = 8e-5; quCap = 0.012;
+        useDesignBoundaryBlend = Switch(false); designBoundaryBlend = 0.08;
+    }
+    else if (preset == "aggressive")
+    {
+        xhFloorTurbMult = 1.5; quInit = 0.006; quRampStart = 80; quRampRate = 1e-4; quCap = 0.012;
+        useDesignBoundaryBlend = Switch(true); designBoundaryBlend = 0.10;
+    }
+    else if (preset == "strong")
+    {
+        xhFloorTurbMult = 1.5; quInit = 0.005; quRampStart = 60; quRampRate = 1.2e-4; quCap = 0.012;
+        useDesignBoundaryBlend = Switch(true); designBoundaryBlend = 0.15;
+    }
+}
+// Optional per-parameter overrides for fine-tuning
+xhFloorTurbMult      = optProperties.lookupOrDefault<scalar>("xhFloorTurbMult", xhFloorTurbMult);
+quInit               = optProperties.lookupOrDefault<scalar>("quInit", quInit);
+quRampStart          = optProperties.lookupOrDefault<label>("quRampStart", quRampStart);
+quRampRate           = optProperties.lookupOrDefault<scalar>("quRampRate", quRampRate);
+quCap                = optProperties.lookupOrDefault<scalar>("quCap", quCap);
+useDesignBoundaryBlend = optProperties.lookupOrDefault<Switch>("useDesignBoundaryBlend", useDesignBoundaryBlend);
+designBoundaryBlend  = optProperties.lookupOrDefault<scalar>("designBoundaryBlend", designBoundaryBlend);
 Switch solid_area(optProperties.lookup("solid_area"));
 Switch fluid_area(optProperties.lookup("fluid_area"));
 Switch test_area(optProperties.lookup("test_area"));
