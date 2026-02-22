@@ -117,7 +117,7 @@ solvers
 
 SIMPLE
 {
-    nNonOrthogonalCorrectors 1;
+    nNonOrthogonalCorrectors 2;   // Improved p-U coupling; reduces velocity oscillations in low-velocity regions
  //   nCorrectors 2;
 // nOuterCorrectors 10;
     pRefCell 0;

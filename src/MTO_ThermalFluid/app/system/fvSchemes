@@ -27,6 +27,8 @@ ddtSchemes
 gradSchemes
 {
     default         Gauss linear;
+    grad(U)         cellLimited leastSquares 1;   // Robust: limits gradients, reduces U oscillations in low-velocity regions
+    grad(p)         leastSquares;                 // Smoother pressure gradient for momentum corrector
     grad(T)         leastSquares;
     grad(Ta)        leastSquares;
     grad(Tb)        leastSquares;
@@ -36,7 +38,7 @@ divSchemes
 {
     default         Gauss linear;
 
-    div(phi,U)      bounded Gauss upwind;
+    div(phi,U)      bounded Gauss linearUpwind grad(U);  // Second-order upwind with grad(U); robust for turbulent channel flow
     div(-phi,Ua)    bounded Gauss upwind;
     div(-phi,Ub)    bounded Gauss upwind;
     div(-phi,Uc)    bounded Gauss upwind;
