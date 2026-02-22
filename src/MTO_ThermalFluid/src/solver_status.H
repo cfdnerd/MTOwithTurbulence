@@ -126,6 +126,10 @@ inline void storeMeshFilterHeaderContent
     const scalar filterR_suggested_min = Foam::max(1.5, 1.5 * lenCell / Foam::max(len, 1e-30));
     const scalar filterR_suggested_max = Foam::max(2.5, 2.5 * lenCell / Foam::max(len, 1e-30));
     const scalar Re_est = Uref * len / nuVal;
+    const scalar delta_y_yplus5 = 50.0 * nuVal / Foam::max(Uref, 1e-12);
+    const scalar L_est = Foam::pow(Foam::max(volTot, 1e-30), 1.0/3.0);
+    const scalar l_t_est = 0.07 * L_est;
+    const scalar h_req_BL = l_t_est / 2.0;
 
     std::ostringstream os;
     os.precision(6);
@@ -144,12 +148,10 @@ inline void storeMeshFilterHeaderContent
        << " ... " << filterR_suggested_max << "  (rule-of-thumb: 2-3 cell radii)\n";
     os << "# --------------------------------------------------------------------------------\n";
     os << "# Turbulence mesh criteria (RAS k-omega SST):\n";
-    os << "  Re_est " << Re_est
-       << "  | U_ref*len/nu at design-cell scale; bulk Re uses channel Dh instead\n";
-    os << "  y+ < 5 wall-resolved:  first cell delta_y < 50*nu/U_bulk (approx)\n";
-    os << "    | delta_y in wall-normal dir; for fully resolved BL use h < l_t/2 below\n";
-    os << "  Turbulent length scale l_t ~ 0.07*L (L=BL thickness or channel half-height)\n";
-    os << "    | Resolve boundary layers with cell size h < l_t/2 to capture shear\n";
+    os << "  Re_est " << Re_est << "  (U_ref*len/nu at design-cell scale)\n";
+    os << "  First cell height (y+<5 wall-resolved):  delta_y < " << delta_y_yplus5
+       << " m  (50*nu/U_ref)\n";
+    os << "  BL cell size (L_est " << L_est << " m, l_t/2):  h < " << h_req_BL << " m\n";
     os << "# ================================================================================\n\n";
 
     MTOsolverStatus::meshFilterHeaderContent = os.str();
