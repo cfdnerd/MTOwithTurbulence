@@ -84,7 +84,7 @@ scalar turbSensDamp(optProperties.lookupOrDefault<scalar>("turbSensDamp", 0));
 // Robust adjoint framework controls
 scalar adjPseudoInvDtUa(optProperties.lookupOrDefault<scalar>("adjPseudoInvDtUa", 50.0));
 scalar adjPseudoInvDtUb(optProperties.lookupOrDefault<scalar>("adjPseudoInvDtUb", 25.0));
-scalar adjPseudoInvDtTb(optProperties.lookupOrDefault<scalar>("adjPseudoInvDtTb", 10.0));
+scalar adjPseudoInvDtTb(optProperties.lookupOrDefault<scalar>("adjPseudoInvDtTb", 100000.0));
 scalar adjPseudoInvDtTurb(optProperties.lookupOrDefault<scalar>("adjPseudoInvDtTurb", 100.0));
 scalar adjTurbBetaMin(optProperties.lookupOrDefault<scalar>("adjTurbBetaMin", 0.2));
 label adjTurbRampStart(optProperties.lookupOrDefault<label>("adjTurbRampStart", 1));

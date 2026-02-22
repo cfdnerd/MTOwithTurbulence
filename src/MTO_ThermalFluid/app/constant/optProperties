@@ -79,44 +79,7 @@ nAdjTurbPasses      2;         // Number of adjoint turbulence coupling passes p
 turbSensDamp        0;         // Sensitivity damping for turbulence source contribution
 
 // ========================================================================== //
-// 8. ADJOINT: PSEUDO-TRANSIENT & ROBUSTNESS                                  //
-// ========================================================================== //
-adjPseudoInvDtUa    50;        // Pseudo-transient inverse dt for Ua equation
-adjPseudoInvDtUb    40;        // Pseudo-transient inverse dt for Ub equation
-adjPseudoInvDtTb    100000;    // Pseudo-transient inverse dt for Tb (strong diagonal; higher = more stable)
-adjPseudoInvDtTurb  100;       // Pseudo-transient inverse dt for ka/omegaa equations
-
-tbPreSolveReset     1e5;       // Reset Tb to zero before solve if max|Tb| exceeds this
-tbHardCapMin        1e5;       // Lower bound on Tb hard cap (higher = less clipping, less gray)
-tbHardCapMax        1e6;       // Upper bound on Tb hard cap (keeps Tb from exploding)
-tbRhsCapMax         1e12;      // Max |RHS source| per cell; scale down if exceeded (avoids FPE)
-adjTbGradTgradTbCapMax 1e10;   // Cap |grad(T)·grad(Tb)| in ka/omegaa thermal source (objFunction=1)
-
-// ========================================================================== //
-// 9. ADJOINT: CONTINUATION (turbulence & heat)                               //
-// ========================================================================== //
-adjTurbBetaMin      0.2;       // Initial turbulence-adjoint continuation factor
-adjTurbRampStart    1;         // Iteration to start turbulence-adjoint beta ramp
-adjTurbRampEnd      80;        // Iteration to finish turbulence-adjoint beta ramp
-adjTurbLagEvery     2;         // Solve turbulence adjoint every N opt iterations
-
-adjHeatBetaMin      0.1;       // Initial heat-adjoint continuation factor for Ub source
-adjHeatRampStart    1;         // Iteration to start heat-adjoint beta ramp
-adjHeatRampEnd      220;       // Iteration to finish heat-adjoint beta ramp
-adjUbPhiHbyAbCapFloor 1e-7;    // phiHbyAb cap floor (higher = less Ub suppression in passes 1-2, less gray)
-
-// ========================================================================== //
-// 10. ADJOINT: Ua ROBUSTNESS                                                 //
-// ========================================================================== //
-adjUaPassDecay      0.35;      // Extra Ua-source damping factor applied per adjoint pass (>0)
-adjUaPassMinGain    0.10;      // Minimum Ua-source gain floor for later adjoint passes
-adjUaLocalCapCoeff  2000;      // Turb source cap coeff on U^2/L (higher = less suppression, less gray)
-adjUaRhsCapCoeff    500;       // Ua RHS cap coeff on U^2/L (higher = less suppression, less gray)
-adjUaAllPassTbMax   1e6;       // Skip Ua update (any pass) if |Tb| exceeds this (decouple when Tb bad)
-adjUaHigherPassTbMax 1e5;      // Skip higher-pass Ua update if |Tb| exceeds this trust threshold
-
-// ========================================================================== //
-// 11. RUNTIME DIAGNOSTICS                                                    //
+// 8. RUNTIME DIAGNOSTICS (adjoint sections 8-10 pruned; see docs/ADJOINT_OPTIONS_FOR_CONVERGENCE.md)
 // ========================================================================== //
 writeMeshFilterHeader yes;     // Write mesh/filter estimates to solver_status.log at opt 1
 diagLevel           0;         // 0: off, 1: metrics, 2: full field-health logs
