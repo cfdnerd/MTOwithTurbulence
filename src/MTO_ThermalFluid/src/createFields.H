@@ -67,7 +67,7 @@ heavisideDelInit    = optProperties.lookupOrDefault<scalar>("heavisideDelInit", 
 Switch filterLenAniso(optProperties.lookupOrDefault<Switch>("filterLenAniso", Switch(true)));
 Switch filterTurbReScale(optProperties.lookupOrDefault<Switch>("filterTurbReScale", Switch(false)));
 scalar Re_ref(optProperties.lookupOrDefault<scalar>("Re_ref", 1000.0));
-// Brinkman/density projection: preset (laminar|mild|moderate|aggressive|strong) or per-param overrides
+// Brinkman/density projection: preset (off|laminar|mild|moderate|aggressive|strong) or per-param overrides
 scalar xhFloorTurbMult(1.5);
 scalar quInit(0.008);
 label quRampStart(100);
@@ -77,7 +77,12 @@ Switch useDesignBoundaryBlend(Switch(false));
 scalar designBoundaryBlend(0.08);
 {
     word preset(optProperties.lookupOrDefault<word>("brinkmanGraySuppression", "moderate"));
-    if (preset == "laminar")
+    if (preset == "off")
+    {
+        xhFloorTurbMult = 1.0; quInit = 0.005; quRampStart = 80; quRampRate = 1e-4; quCap = 0.02;
+        useDesignBoundaryBlend = Switch(false); designBoundaryBlend = 0;
+    }
+    else if (preset == "laminar")
     {
         xhFloorTurbMult = 1.0; quInit = 0.01; quRampStart = 120; quRampRate = 5e-5; quCap = 0.01;
         useDesignBoundaryBlend = Switch(false); designBoundaryBlend = 0.05;

@@ -64,7 +64,7 @@ filterPMean         8;         // fW-mean exponent p (higher = sharper, less gra
 // ========================================================================== //
 // 6. BRINKMAN & DENSITY PROJECTION                                           //
 // ========================================================================== //
-brinkmanGraySuppression  aggressive;  // laminar|mild|moderate|aggressive|strong (aggressive: less cracks)
+brinkmanGraySuppression  moderate;    // off|laminar|mild|moderate|aggressive|strong (off=parent-like, no extra floor/blend)
 useDesignBoundaryBlend   no;        // yes = blend design cells adjacent to fluid; no = avoid boundary cracks
 // override with quInit/RampStart/RampRate/quCap, xhFloorTurbMult, designBoundaryBlend if needed
 
