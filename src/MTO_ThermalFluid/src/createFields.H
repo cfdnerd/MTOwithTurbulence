@@ -29,14 +29,20 @@ dimensionedScalar b("b", dimensionSet(0,-2,0,0,0,0,0),1.0);//filter coeff stage 
 dimensionedScalar bFilter2("bFilter2", dimensionSet(0,-2,0,0,0,0,0),1.0);//filter coeff stage 2 (cascaded)
 dimensionedScalar b1("b1", dimensionSet(0,2,-2,-2,0,0,0),1.0);
 Switch useCascadedFilter(optProperties.lookupOrDefault<Switch>("useCascadedFilter", Switch(false)));  // false = legacy (less gray)
-// Heaviside projection: preset (low|medium|high|strong) or per-param overrides
+// Heaviside projection: preset (legacy|low|medium|high|strong) or per-param overrides
+// Parameter comparison uses parent MTO new_2022.12.15 (MTopOpt/MTO)
 scalar heavisideDelFactor(0.28);
 scalar heavisideDelCap(120.0);
 label heavisideDelStart(50);
 scalar heavisideDelInit(5.0);
 {
-    word preset(optProperties.lookupOrDefault<word>("heavisideGraySuppression", "medium"));
-    if (preset == "low")
+    word preset(optProperties.lookupOrDefault<word>("heavisideGraySuppression", "legacy"));
+    if (preset == "legacy")
+    {
+        // Parent MTO new_2022.12.15 MTO_ThermalFluid: del = min(0.2*opt, 100)
+        heavisideDelFactor = 0.2; heavisideDelCap = 100; heavisideDelStart = 0; heavisideDelInit = 0;
+    }
+    else if (preset == "low")
     {
         heavisideDelFactor = 0.22; heavisideDelCap = 80; heavisideDelStart = 90; heavisideDelInit = 3;
     }
