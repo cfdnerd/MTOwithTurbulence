@@ -91,7 +91,7 @@ solvers
     Tb
     {
         solver          GAMG;
-        smoother        DICGaussSeidel;
+        smoother        GaussSeidel;
         tolerance       1e-4;   // Relaxed for fine-mesh stability; GAMG more robust than PBiCGStab
         relTol          0.05;
         maxIter         500;    // Fail-fast if diverging; AdjointHeat_Tb clips/resets
