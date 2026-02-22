@@ -36,7 +36,7 @@ Pnorm               300;       // p-norm exponent for max-temperature approximat
 // ========================================================================== //
 // 3. MMA OPTIMIZER                                                           //
 // ========================================================================== //
-filterR             5;         // Filter radius (smaller = less smoothing, less gray; was 2.2)
+filterR             2.5;       // Filter radius (smaller = less smoothing, less gray; 2-3 cell radii typical)
 raa0                1e-5;      // MMA regularization parameter
 mma_init            0.3;       // MMA asymptote initialization factor
 mma_dec             0.7;       // MMA asymptote decrease factor
