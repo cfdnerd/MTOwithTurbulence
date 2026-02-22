@@ -17,16 +17,25 @@ FoamFile
 
 solvers
 {
+    p
+    {
+        solver          GAMG;
+        smoother        DICGaussSeidel;
+        tolerance       1e-6;
+        relTol          0.001;
+        maxIter         1000;   // Primal pressure: drive residual below 1e-6
+        nCellsInCoarsestLevel 10;
+    }
     pa
     {
         solver          GAMG;
         smoother        DICGaussSeidel;
-        tolerance       1e-7;
-        relTol          0.005;
-        maxIter         1000;   // Adjoint pressure: more iterations for lower residuals
+        tolerance       1e-6;
+        relTol          0.001;
+        maxIter         1500;   // Adjoint pressure: drive residual below 1e-6
         nCellsInCoarsestLevel 10;
     }
-    "(p|pb|pc)"
+    "(pb|pc)"
     {
         solver          GAMG;
         smoother        DICGaussSeidel;
@@ -75,11 +84,19 @@ solvers
     {
         solver          PBiCGStab;
         preconditioner  DILU;
-        tolerance       1e-7;   // Tighter for lower Primal T residuals (was 1e-6, finalRes~8e-3)
-        relTol          0.001;
-        maxIter         2000;   // Allow more iterations to reach tolerance
+        tolerance       1e-6;   // Drive Primal T residual below 1e-6
+        relTol          0.0005;
+        maxIter         3000;
     }
-    "(Ta|Tb)"
+    Tb
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-6;   // Drive Tb residual below 1e-6
+        relTol          0.01;
+        maxIter         2000;
+    }
+    Ta
     {
         solver          PBiCGStab;
         preconditioner  DILU;
