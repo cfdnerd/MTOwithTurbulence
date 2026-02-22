@@ -36,7 +36,7 @@ Pnorm               300;       // p-norm exponent for max-temperature approximat
 // ========================================================================== //
 // 3. MMA OPTIMIZER                                                           //
 // ========================================================================== //
-filterR             5;       // Filter radius (smaller = less smoothing, less gray; 2-3 cell radii typical)
+filterR             2.5;     // Filter radius (2-3 cell radii typical; larger = less cracks, more gray)
 raa0                1e-5;      // MMA regularization parameter
 mma_init            0.3;       // MMA asymptote initialization factor
 mma_dec             0.7;       // MMA asymptote decrease factor
@@ -64,8 +64,9 @@ filterPMean         8;         // fW-mean exponent p (higher = sharper, less gra
 // ========================================================================== //
 // 6. BRINKMAN & DENSITY PROJECTION                                           //
 // ========================================================================== //
-brinkmanGraySuppression  moderate;  // laminar|mild|moderate|aggressive|strong
-// override with quInit/RampStart/RampRate/quCap, xhFloorTurbMult, useDesignBoundaryBlend, designBoundaryBlend if needed
+brinkmanGraySuppression  aggressive;  // laminar|mild|moderate|aggressive|strong (aggressive: less cracks)
+useDesignBoundaryBlend   no;        // yes = blend design cells adjacent to fluid; no = avoid boundary cracks
+// override with quInit/RampStart/RampRate/quCap, xhFloorTurbMult, designBoundaryBlend if needed
 
 // ========================================================================== //
 // 7. ADJOINT: COUPLING                                                       //
