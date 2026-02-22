@@ -36,6 +36,7 @@ Pnorm               300;       // p-norm exponent for max-temperature approximat
 // ========================================================================== //
 // 3. MMA OPTIMIZER                                                           //
 // ========================================================================== //
+filterR             5;         // Filter radius (smaller = less smoothing, less gray; was 2.2)
 raa0                1e-5;      // MMA regularization parameter
 mma_init            0.3;       // MMA asymptote initialization factor
 mma_dec             0.7;       // MMA asymptote decrease factor
@@ -45,16 +46,12 @@ movlim              0.4;       // MMA move limit (larger = faster updates; 0.2 f
 // ========================================================================== //
 // 4. LEGACY FILTER (with turbulence extension)                               //
 // ========================================================================== //
-filterR             5;       // Filter radius (smaller = less smoothing, less gray; was 2.2)
 // Length scale (used by both cascaded and legacy)
 filterLenAniso      yes;       // yes = geometric-mean len for channel mesh; no = volume-based
 filterTurbReScale   no;        // yes = scale filterR by (Re_ref/Re)^0.5 for high-Re (legacy path)
 Re_ref              1000;      // Reference Re for filter scaling (when filterTurbReScale yes)
 // Heaviside projection (legacy filter; cascaded uses same for its Heaviside stage)
-heavisideDelFactor  0.38;      // Heaviside ramp factor (higher = sharper, less gray; 0.35–0.4 for strong suppression)
-heavisideDelCap     180;       // Heaviside sharpness cap (higher = sharper at convergence)
-heavisideDelStart   25;        // Iteration to start sharpening (earlier = less gray by mid-run)
-heavisideDelInit    4;         // Initial del when opt<=heavisideDelStart (gentle)
+heavisideGraySuppression  strong;  // low|medium|high|strong (gray zone suppression); override with heavisideDelFactor/Cap/Start/Init if needed
 
 // ========================================================================== //
 // 5. CASCADED FILTER                                                         //

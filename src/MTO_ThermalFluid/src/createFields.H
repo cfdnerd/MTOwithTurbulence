@@ -29,11 +29,35 @@ dimensionedScalar b("b", dimensionSet(0,-2,0,0,0,0,0),1.0);//filter coeff stage 
 dimensionedScalar bFilter2("bFilter2", dimensionSet(0,-2,0,0,0,0,0),1.0);//filter coeff stage 2 (cascaded)
 dimensionedScalar b1("b1", dimensionSet(0,2,-2,-2,0,0,0),1.0);
 Switch useCascadedFilter(optProperties.lookupOrDefault<Switch>("useCascadedFilter", Switch(false)));  // false = legacy (less gray)
-// Legacy filter turbulence tuning (optProperties)
-scalar heavisideDelFactor(optProperties.lookupOrDefault<scalar>("heavisideDelFactor", 0.28));
-scalar heavisideDelCap(optProperties.lookupOrDefault<scalar>("heavisideDelCap", 120.0));
-label heavisideDelStart(optProperties.lookupOrDefault<label>("heavisideDelStart", 50));
-scalar heavisideDelInit(optProperties.lookupOrDefault<scalar>("heavisideDelInit", 5.0));
+// Heaviside projection: preset (low|medium|high|strong) or per-param overrides
+scalar heavisideDelFactor(0.28);
+scalar heavisideDelCap(120.0);
+label heavisideDelStart(50);
+scalar heavisideDelInit(5.0);
+{
+    word preset(optProperties.lookupOrDefault<word>("heavisideGraySuppression", "medium"));
+    if (preset == "low")
+    {
+        heavisideDelFactor = 0.22; heavisideDelCap = 80; heavisideDelStart = 90; heavisideDelInit = 3;
+    }
+    else if (preset == "medium")
+    {
+        heavisideDelFactor = 0.28; heavisideDelCap = 120; heavisideDelStart = 50; heavisideDelInit = 5;
+    }
+    else if (preset == "high")
+    {
+        heavisideDelFactor = 0.35; heavisideDelCap = 150; heavisideDelStart = 35; heavisideDelInit = 4;
+    }
+    else if (preset == "strong")
+    {
+        heavisideDelFactor = 0.38; heavisideDelCap = 180; heavisideDelStart = 25; heavisideDelInit = 4;
+    }
+}
+// Optional per-parameter overrides for fine-tuning
+heavisideDelFactor = optProperties.lookupOrDefault<scalar>("heavisideDelFactor", heavisideDelFactor);
+heavisideDelCap     = optProperties.lookupOrDefault<scalar>("heavisideDelCap", heavisideDelCap);
+heavisideDelStart   = optProperties.lookupOrDefault<label>("heavisideDelStart", heavisideDelStart);
+heavisideDelInit    = optProperties.lookupOrDefault<scalar>("heavisideDelInit", heavisideDelInit);
 Switch filterLenAniso(optProperties.lookupOrDefault<Switch>("filterLenAniso", Switch(true)));
 Switch filterTurbReScale(optProperties.lookupOrDefault<Switch>("filterTurbReScale", Switch(false)));
 scalar Re_ref(optProperties.lookupOrDefault<scalar>("Re_ref", 1000.0));
